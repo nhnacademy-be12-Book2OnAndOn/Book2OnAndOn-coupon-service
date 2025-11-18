@@ -1,6 +1,5 @@
-package com.example.book2onandoncouponservice.coupon.domain.entity;
+package com.example.book2onandoncouponservice.entity;
 
-import com.example.book2onandoncouponservice.couponpolicy.domain.entity.CouponPolicy;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,8 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,8 +24,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Builder
 @AllArgsConstructor
+@Table(name = "Coupon")
 public class Coupon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +33,7 @@ public class Coupon {
     private Long couponId;
 
     @NotNull
+    @Size(max = 100)
     @Column(name = "coupon_name")
     private String couponName;
 
@@ -49,14 +52,14 @@ public class Coupon {
 
     @NotNull
     @Column(name = "coupon_issued_date")
-    private LocalDate issuedDate;
+    private LocalDateTime issuedDate;
 
     @Column(name = "coupon_used_date")
-    private LocalDate usedDate;
+    private LocalDateTime usedDate;
 
     @NotNull
     @Column(name = "coupon_end_date")
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     @ManyToOne
     @NotNull

@@ -1,4 +1,4 @@
-package com.example.book2onandoncouponservice.couponpolicy.domain.entity;
+package com.example.book2onandoncouponservice.entity;
 
 public enum CouponPolicyType {
     BIRTHDAY,

@@ -1,4 +1,4 @@
-package com.example.book2onandoncouponservice.coupon.domain.entity;
+package com.example.book2onandoncouponservice.entity;
 
 public enum CouponStatus {
     NOT_USED,

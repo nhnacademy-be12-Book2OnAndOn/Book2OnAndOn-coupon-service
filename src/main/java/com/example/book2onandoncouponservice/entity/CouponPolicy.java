@@ -1,4 +1,4 @@
-package com.example.book2onandoncouponservice.couponpolicy.domain.entity;
+package com.example.book2onandoncouponservice.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -20,9 +21,9 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "CouponPolicy")
 public class CouponPolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

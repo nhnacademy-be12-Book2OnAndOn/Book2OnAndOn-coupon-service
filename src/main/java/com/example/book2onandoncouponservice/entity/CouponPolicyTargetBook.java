@@ -1,4 +1,4 @@
-package com.example.book2onandoncouponservice.couponpolicy.domain.entity;
+package com.example.book2onandoncouponservice.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,21 +18,21 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-@Builder
 @AllArgsConstructor
-@Table(name = "CouponPolicyTargetCategory")
-public class CouponPolicyTargetCategory {
+@Table(name = "CouponPolicyTargetBook")
+public class CouponPolicyTargetBook {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "policy_target_category_id")
-    private Long policyTargetCategoryId;
+    @Column(name = "policy_target_book_id")
+    private Long policyTargetBookId;
 
     @NotNull
-    @Column(name = "category_id")
-    private Long categoryId;
+    @Column(name = "book_id")
+    private Long bookId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_policy_id")
     private CouponPolicy couponPolicy;
+
 }
