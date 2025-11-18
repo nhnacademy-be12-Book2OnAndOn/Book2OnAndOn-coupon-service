@@ -3,16 +3,13 @@ package com.example.book2onandoncouponservice.dto.response;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
-import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.entity.CouponStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 @AllArgsConstructor
 public class CouponResponseDto {
     private Long couponId;
@@ -27,14 +24,13 @@ public class CouponResponseDto {
     private CouponStatus status; // 사용 가능 여부
 
     // Entity -> DTO 변환 메서드
-    public CouponResponseDto(Coupon coupon){
+    public CouponResponseDto(Coupon coupon) {
         CouponPolicy couponPolicy = coupon.getCouponPolicy();
 
         String discountDescription;
-        if(couponPolicy.getCouponDiscountType().equals(CouponDiscountType.FIXED)){
+        if (couponPolicy.getCouponDiscountType().equals(CouponDiscountType.FIXED)) {
             discountDescription = String.format("%,d원 할인", couponPolicy.getCouponDiscountValue().intValue());
-        }
-        else{
+        } else {
             discountDescription = String.format("%.0f%% 할인", couponPolicy.getCouponDiscountValue());
         }
 

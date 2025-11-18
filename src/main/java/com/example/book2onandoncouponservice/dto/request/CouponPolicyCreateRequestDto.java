@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.aspectj.bridge.IMessage;
 
 @Getter
 @NoArgsConstructor
@@ -27,10 +28,10 @@ public class CouponPolicyCreateRequestDto {
     private CouponDiscountType discountType;
 
     @NotNull(message = "할인율은 필수입니다.")
-    @Min(0)
+    @Min(value = 0, message = "할인율은 음수일 수 없습니다.")
     private BigDecimal discountValue;
 
-    @Min(0)
+    @Min(value = 0 , message = "최소구매금액은 음수일 수 없습니다.")
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private Integer durationDays;
