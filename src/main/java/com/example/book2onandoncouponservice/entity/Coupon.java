@@ -12,10 +12,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -65,5 +63,44 @@ public class Coupon {
     @NotNull
     @JoinColumn(name = "coupon_policy_id")
     private CouponPolicy couponPolicy;
+
+    //쿠폰 생성시 필요한 생성자 추가
+    public Coupon(String couponName, Long userId, CouponPolicy couponPolicy,
+                  LocalDateTime issuedDate, LocalDateTime endDate) {
+        this.couponName = couponName;
+        this.userId = userId;
+        this.couponPolicy = couponPolicy;
+        this.issuedDate = issuedDate;
+        this.endDate = endDate;
+        this.couponStatus = CouponStatus.NOT_USED; // 쿠폰 생성 시 상태 NOT_USED
+    }
+
+    //더티체킹 쿠폰사용 메서드
+    public void use(Long orderId) {
+        // 사용한 쿠폰인지 검증
+        if (this.couponStatus != CouponStatus.NOT_USED) {
+            throw new IllegalStateException("이미 사용했거나 취소된 쿠폰입니다.");
+        }
+
+        // 유효 기간이 지났는지 검증
+        if (LocalDateTime.now().isAfter(this.endDate)) {
+            throw new IllegalStateException("유효 기간이 지난 쿠폰입니다.");
+        }
+
+        this.couponStatus = CouponStatus.USED;
+        this.orderId = orderId;
+        this.usedDate = LocalDateTime.now();
+    }
+
+    //더티체킹 쿠폰사용 취소 메서드
+    public void cancelUsage() {
+        if (this.couponStatus != CouponStatus.USED) {
+            throw new IllegalArgumentException("사용한 쿠폰이 아닙니다.");
+        }
+
+        this.couponStatus = CouponStatus.NOT_USED;
+        this.orderId = null;
+        this.usedDate = null;
+    }
 
 }
