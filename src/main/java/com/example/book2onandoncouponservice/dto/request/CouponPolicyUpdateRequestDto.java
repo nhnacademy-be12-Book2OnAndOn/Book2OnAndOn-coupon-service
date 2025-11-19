@@ -4,7 +4,6 @@ import com.example.book2onandoncouponservice.entity.CouponDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -24,13 +23,13 @@ public class CouponPolicyUpdateRequestDto {
     private CouponDiscountType couponDiscountType;
 
     @Min(value = 0, message = "할인 값은 0 이상이어야 합니다.")
-    private BigDecimal couponDiscountValue;
+    private Integer couponDiscountValue;
 
     @Min(value = 0, message = "최소 주문 금액은 0 이상이어야 합니다.")
-    private BigDecimal minPrice;
+    private Integer minPrice;
 
     @Min(value = 0, message = "최대 할인 금액은 0 이상이어야 합니다.")
-    private BigDecimal maxPrice;
+    private Integer maxPrice;
 
     @Min(value = 1, message = "유효 기간은 1일 이상이어야 합니다.")
     private Integer durationDays;
