@@ -1,5 +1,7 @@
 package com.example.book2onandoncouponservice.entity;
 
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,7 +15,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -64,4 +65,64 @@ public class CouponPolicy {
 
     @Column(name = "coupon_fixed_end_date")
     private LocalDate fixedEndDate;
+
+    @Column(name = "coupon_policy_status")
+    private CouponPolicyStatus couponPolicyStatus;
+
+    public CouponPolicy(CouponPolicyCreateRequestDto requestDto) {
+        this.couponPolicyName = requestDto.getName();
+        this.couponPolicyType = requestDto.getType();
+        this.couponDiscountType = requestDto.getDiscountType();
+        this.couponDiscountValue = requestDto.getDiscountValue();
+        this.minPrice = requestDto.getMinPrice();
+        this.maxPrice = requestDto.getMaxPrice();
+        this.durationDays = requestDto.getDurationDays();
+        this.fixedStartDate = requestDto.getFixedStartDate();
+        this.fixedEndDate = requestDto.getFixedEndDate();
+        this.couponPolicyStatus = CouponPolicyStatus.ACTIVE;
+    }
+
+    public void updatePolicy(CouponPolicyRequestDto requestDto) {
+
+        if (requestDto.getCouponPolicyName() != null) {
+            this.couponPolicyName = requestDto.getCouponPolicyName();
+        }
+
+        if (requestDto.getCouponPolicyType() != null) {
+            this.couponPolicyType = requestDto.getCouponPolicyType();
+        }
+
+        if (requestDto.getCouponDiscountType() != null) {
+            this.couponDiscountType = requestDto.getCouponDiscountType();
+        }
+
+        if (requestDto.getCouponDiscountValue() != null) {
+            this.couponDiscountValue = requestDto.getCouponDiscountValue();
+        }
+
+        if (requestDto.getMinPrice() != null) {
+            this.minPrice = requestDto.getMinPrice();
+        }
+
+        if (requestDto.getMaxPrice() != null) {
+            this.maxPrice = requestDto.getMaxPrice();
+        }
+
+        if (requestDto.getDurationDays() != null) {
+            this.durationDays = requestDto.getDurationDays();
+        }
+
+        if (requestDto.getFixedStartDate() != null) {
+            this.fixedStartDate = requestDto.getFixedStartDate();
+        }
+
+        if (requestDto.getFixedEndDate() != null) {
+            this.fixedEndDate = requestDto.getFixedEndDate();
+        }
+    }
+
+    public void deActive() {
+        this.couponPolicyStatus = CouponPolicyStatus.DEACTIVE;
+    }
+
 }
