@@ -1,7 +1,7 @@
 package com.example.book2onandoncouponservice.entity;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,7 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -48,14 +47,14 @@ public class CouponPolicy {
 
     @NotNull
     @Column(name = "coupon_discount_value", precision = 10, scale = 2)
-    private BigDecimal couponDiscountValue;
+    private Integer couponDiscountValue;
 
     @NotNull
     @Column(name = "coupon_min_purchase_amount", precision = 12, scale = 2)
-    private BigDecimal minPrice;
+    private Integer minPrice;
 
     @Column(name = "coupon_max_discount_amount", precision = 12, scale = 2)
-    private BigDecimal maxPrice;
+    private Integer maxPrice;
 
     @Column(name = "coupon_duration_days")
     private Integer durationDays;
@@ -82,7 +81,7 @@ public class CouponPolicy {
         this.couponPolicyStatus = CouponPolicyStatus.ACTIVE;
     }
 
-    public void updatePolicy(CouponPolicyRequestDto requestDto) {
+    public void updatePolicy(CouponPolicyUpdateRequestDto requestDto) {
 
         if (requestDto.getCouponPolicyName() != null) {
             this.couponPolicyName = requestDto.getCouponPolicyName();

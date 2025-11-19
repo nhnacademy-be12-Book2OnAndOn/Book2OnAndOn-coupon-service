@@ -1,7 +1,7 @@
 package com.example.book2onandoncouponservice.service;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +18,7 @@ public interface CouponPolicyService {
     Long createPolicy(CouponPolicyCreateRequestDto requestDto);
 
     //쿠폰 정책 수정
-    void updatePolicy(Long couponPolicyId, CouponPolicyRequestDto requestDto);
+    void updatePolicy(Long couponPolicyId, CouponPolicyUpdateRequestDto requestDto);
 
     //쿠폰 정책 비활성화
     void deactivatePolicy(Long couponPolicyId);

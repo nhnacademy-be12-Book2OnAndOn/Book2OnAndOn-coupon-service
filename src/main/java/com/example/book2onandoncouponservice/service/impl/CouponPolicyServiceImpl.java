@@ -1,7 +1,7 @@
 package com.example.book2onandoncouponservice.service.impl;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
@@ -77,7 +77,7 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     //쿠폰정책 업데이트
     @Transactional
     @Override
-    public void updatePolicy(Long couponPolicyId, CouponPolicyRequestDto requestDto) {
+    public void updatePolicy(Long couponPolicyId, CouponPolicyUpdateRequestDto requestDto) {
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
 

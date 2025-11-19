@@ -3,7 +3,6 @@ package com.example.book2onandoncouponservice.dto.response;
 import com.example.book2onandoncouponservice.entity.CouponDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -19,9 +18,9 @@ public class CouponPolicyResponseDto {
     private String couponPolicyName;
     private CouponPolicyType couponPolicyType;
     private CouponDiscountType couponDiscountType;
-    private BigDecimal couponDiscountValue;
-    private BigDecimal minPrice;
-    private BigDecimal maxPrice;
+    private Integer couponDiscountValue;
+    private Integer minPrice;
+    private Integer maxPrice;
 
     private Integer durationDays;
     private LocalDate fixedStartDate;
