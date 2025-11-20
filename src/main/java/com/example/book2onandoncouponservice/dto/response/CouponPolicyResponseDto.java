@@ -1,7 +1,7 @@
 package com.example.book2onandoncouponservice.dto.response;
 
-import com.example.book2onandoncouponservice.entity.CouponDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import java.time.LocalDate;
 import java.util.List;
@@ -17,7 +17,7 @@ public class CouponPolicyResponseDto {
     private Long couponPolicyId;
     private String couponPolicyName;
     private CouponPolicyType couponPolicyType;
-    private CouponDiscountType couponDiscountType;
+    private CouponPolicyDiscountType couponPolicyDiscountType;
     private Integer couponDiscountValue;
     private Integer minPrice;
     private Integer maxPrice;
@@ -34,7 +34,7 @@ public class CouponPolicyResponseDto {
         this.couponPolicyId = entity.getCouponPolicyId();
         this.couponPolicyName = entity.getCouponPolicyName();
         this.couponPolicyType = entity.getCouponPolicyType();
-        this.couponDiscountType = entity.getCouponDiscountType();
+        this.couponPolicyDiscountType = entity.getCouponPolicyDiscountType();
         this.couponDiscountValue = entity.getCouponDiscountValue();
         this.minPrice = entity.getMinPrice();
         this.maxPrice = entity.getMaxPrice();

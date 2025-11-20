@@ -26,6 +26,7 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     private final CouponPolicyTargetCategoryRepository targetCategoryRepository;
 
     //쿠폰정책 조회 Pageable
+    @Transactional(readOnly = true)
     @Override
     public Page<CouponPolicyResponseDto> getCouponPolicies(Pageable pageable) {
 
@@ -36,9 +37,10 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
         );
     }
 
-    //특정 쿠폰정책 조회
+    //특정 쿠폰정책 조회)
     @Override
     public CouponPolicyResponseDto getCouponPolicy(Long couponPolicyId) {
+
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
 
@@ -118,7 +120,6 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
             targetBookRepository.saveAll(targets);
         }
     }
-
 
     //쿠폰정책 생성 시 리스트로 받은 categoryId를 이용해 CouponPolicyTargetCategory 생성
     private void saveTargetCategories(CouponPolicy couponPolicy, List<Long> categoryIds) {

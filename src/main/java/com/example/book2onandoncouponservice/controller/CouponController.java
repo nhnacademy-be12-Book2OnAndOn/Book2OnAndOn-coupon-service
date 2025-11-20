@@ -1,77 +1,81 @@
 package com.example.book2onandoncouponservice.controller;
 
-import com.example.book2onandoncouponservice.dto.request.CouponIssueRequestDto;
-import com.example.book2onandoncouponservice.dto.request.UseCouponRequestDto;
+
+import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
+import com.example.book2onandoncouponservice.repository.CouponRepository;
+import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import com.example.book2onandoncouponservice.service.CouponService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
-@RestController
 @RequiredArgsConstructor
+@RestController
 public class CouponController {
+
     private final CouponService couponService;
+    private final CouponPolicyService couponPolicyService; // 정책 관련 API를 위해 추가
+    private final CouponRepository couponRepository;
 
-    @GetMapping("/users/me/coupons")
-    public ResponseEntity<List<CouponResponseDto>> getMyCoupons(@RequestHeader("X-USER-ID") Long userId) {
+    @GetMapping("/admin/coupons")
+    public ResponseEntity<Page<CouponResponseDto>> getCoupons(
+            Pageable pageable) {
 
-        log.info("쿠폰 조회 - userId: {}", userId);
-        List<CouponResponseDto> coupons = couponService.getMyCoupons(userId);
+        Page<CouponResponseDto> coupons = couponService.getCoupons(pageable);
 
         return ResponseEntity.ok(coupons);
     }
 
-    @PostMapping("/coupons/download/{policyId}")
-    public ResponseEntity<Long> downloadCoupon(@RequestHeader("X-USER-ID") Long userId,
-                                               @PathVariable("policyId") Long policyId) {
 
-        log.info("사용자 쿠폰 발급 시도 - userId: {}, policyId: {}", userId, policyId);
+    @PostMapping("/admin/coupons")
+    public ResponseEntity<Void> createCoupon(
+            @Valid @RequestBody CouponCreateRequestDto requestDto) {
 
-        Long couponId = couponService.issueCoupon(userId, policyId);
+        Long couponId = couponService.createCouponUnit(requestDto);
+        log.info("쿠폰 생성 완료: {} ", couponId);
 
-        log.info("사용자 쿠폰 발급 완료 - couponId: {}", couponId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(couponId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    //필요할진 모르겠음 보류
-    @PostMapping("/admin/coupons/issue")
-    public ResponseEntity<Long> issueCoupon(@Valid @RequestBody CouponIssueRequestDto requestDto) {
+    //사용자 조회용
+    @GetMapping("/coupons")
+    public ResponseEntity<Page<CouponResponseDto>> availableCoupon(Pageable pageable) {
 
-        log.info("쿠폰 발급 시도 - userId: {}, policyId: {}", requestDto.getUserId(), requestDto.getCouponPolicyId());
-        Long couponId = couponService.issueCoupon(requestDto.getUserId(), requestDto.getCouponPolicyId());
-
-        log.info("쿠폰 발급 완료 - couponId: {}", couponId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(couponId);
+        Page<CouponResponseDto> coupons = couponService.getAvailableCoupon(pageable);
+        return ResponseEntity.ok(coupons);
     }
 
-    @PutMapping("/coupons/{couponId}/use")
-    public ResponseEntity<Void> useCoupon(@RequestHeader("X-USER-ID") Long userId,
-                                          @PathVariable("couponId") Long couponId,
-                                          @Valid @RequestBody UseCouponRequestDto requestDto) {
+    @GetMapping("/coupons/{couponId}")
+    public ResponseEntity<CouponResponseDto> getCoupon(
+            @PathVariable("couponId") Long couponId) {
 
-        log.info("쿠폰 사용 처리 시도 - couponId: {}, orderId: {}, userId: {}", couponId, requestDto.getOrderId(), userId);
-        couponService.useCoupon(couponId, requestDto.getOrderId(), userId);
+        CouponResponseDto coupon = couponService.getCouponDetail(couponId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(coupon);
     }
 
-    @PutMapping("/coupons/order/{orderId}/cancel")
-    public ResponseEntity<Void> cancelCouponUsage(@PathVariable("orderId") Long orderId) {
-        log.info("쿠폰 사용 취소 시도 - orderId: {}", orderId);
-        couponService.cancelCouponUsage(orderId);
+    @PostMapping("/coupons/{couponId}")
+    public ResponseEntity<Void> issueCoupon(
+            @RequestHeader("X-USER-ID") Long userId,
+            @PathVariable("couponId") Long couponId) {
 
-        return ResponseEntity.ok().build();
+        Long memberCouponId = couponService.issueMemberCoupon(userId, couponId);
+        log.info("사용자 발급 완료: UserId={}, MemberCouponId={}", userId, memberCouponId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+
 }

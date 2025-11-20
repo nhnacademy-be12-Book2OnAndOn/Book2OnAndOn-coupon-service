@@ -1,19 +1,24 @@
 package com.example.book2onandoncouponservice.service;
 
+import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CouponService {
 
-    //쿠폰 발급
-    Long issueCoupon(Long userId, Long policyId);
+    //쿠폰 생성
+    Long createCouponUnit(CouponCreateRequestDto requestDto);
 
-    //보유중인 쿠폰 조회
-    List<CouponResponseDto> getMyCoupons(Long userId);
+    //관리자용 모든 쿠폰 목록 조회
+    Page<CouponResponseDto> getCoupons(Pageable pageable);
 
-    //쿠폰 사용
-    void useCoupon(Long couponId, Long orderId, Long userId);
+    //특정 쿠폰 조회
+    CouponResponseDto getCouponDetail(Long couponUnitId);
 
-    //쿠폰 사용 취소 (결제 오류, 반품)
-    void cancelCouponUsage(Long orderId);
+    //사용자용 발급가능한 쿠폰 목록 조회
+    Page<CouponResponseDto> getAvailableCoupon(Pageable pageable);
+
+    //사용자 쿠폰 발급
+    Long issueMemberCoupon(Long userId, Long couponUnitId);
 }

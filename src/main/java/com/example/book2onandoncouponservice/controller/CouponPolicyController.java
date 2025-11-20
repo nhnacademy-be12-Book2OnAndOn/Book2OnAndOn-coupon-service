@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,22 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/coupon-policies")
 public class CouponPolicyController {
     private final CouponPolicyService couponPolicyService;
-    private static final String ADMIN_ROLE = "ROLE_COUPON_ADMIN";
-    private static final String SUPER_ROLE = "ROLE_SUPER_ADMIN";
-
-    private void checkAuthorization(String userRole) {
-        if (!(ADMIN_ROLE.equals(userRole) || SUPER_ROLE.equals(userRole))) {
-            log.warn("접근권한 없는 사용자 접근시도");
-            throw new RuntimeException("접근권한이 없습니다.");
-        }
-    }
 
     @GetMapping
-    public ResponseEntity<Page<CouponPolicyResponseDto>> getPolicies(
-            @RequestHeader("X-USER-ROLE") String userRole,
-            Pageable pageable) {
-
-        checkAuthorization(userRole);
+    public ResponseEntity<Page<CouponPolicyResponseDto>> getPolicies(Pageable pageable) {
 
         Page<CouponPolicyResponseDto> policies = couponPolicyService.getCouponPolicies(pageable);
         return ResponseEntity.ok(policies);
@@ -50,10 +36,7 @@ public class CouponPolicyController {
 
     @GetMapping("/{couponPolicyId}")
     public ResponseEntity<CouponPolicyResponseDto> getPolicy(
-            @RequestHeader("X-USER-ROLE") String userRole,
             @PathVariable("couponPolicyId") Long couponPolicyId) {
-
-        checkAuthorization(userRole);
 
         CouponPolicyResponseDto responseDto = couponPolicyService.getCouponPolicy(couponPolicyId);
 
@@ -62,10 +45,7 @@ public class CouponPolicyController {
 
     @PostMapping
     public ResponseEntity<Void> createPolicy(
-            @RequestHeader("X-USER-ROLE") String userRole,
             @Valid @RequestBody CouponPolicyCreateRequestDto requestDto) {
-
-        checkAuthorization(userRole);
 
         Long policyId = couponPolicyService.createPolicy(requestDto);
         log.info("쿠폰정책 생성 완료: {}", policyId);
@@ -75,11 +55,8 @@ public class CouponPolicyController {
 
     @PutMapping("/{couponPolicyId}")
     public ResponseEntity<Void> updatePolicy(
-            @RequestHeader("X-USER-ROLE") String userRole,
             @PathVariable Long couponPolicyId,
             @Valid @RequestBody CouponPolicyUpdateRequestDto requestDto) {
-
-        checkAuthorization(userRole);
 
         couponPolicyService.updatePolicy(couponPolicyId, requestDto);
         log.info("쿠폰정책 수정완료: {}", couponPolicyId);
@@ -89,10 +66,7 @@ public class CouponPolicyController {
 
     @DeleteMapping("/{couponPolicyId}")
     public ResponseEntity<Void> deactivatePolicy(
-            @RequestHeader("X-USER-ROLE") String userRole,
             @PathVariable Long couponPolicyId) {
-
-        checkAuthorization(userRole);
 
         couponPolicyService.deactivatePolicy(couponPolicyId);
         log.warn("쿠폰정책 비활성화 완료: {}", couponPolicyId);

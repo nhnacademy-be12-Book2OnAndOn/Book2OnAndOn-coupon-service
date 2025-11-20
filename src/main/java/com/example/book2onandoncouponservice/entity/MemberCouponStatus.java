@@ -1,6 +1,6 @@
 package com.example.book2onandoncouponservice.entity;
 
-public enum CouponStatus {
+public enum MemberCouponStatus {
     NOT_USED,
     USED,
     EXPIRED,
