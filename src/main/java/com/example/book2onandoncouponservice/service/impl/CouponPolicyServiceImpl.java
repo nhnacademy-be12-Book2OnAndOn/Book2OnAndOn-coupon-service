@@ -120,7 +120,6 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
         }
     }
 
-
     //쿠폰정책 생성 시 리스트로 받은 categoryId를 이용해 CouponPolicyTargetCategory 생성
     private void saveTargetCategories(CouponPolicy couponPolicy, List<Long> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
