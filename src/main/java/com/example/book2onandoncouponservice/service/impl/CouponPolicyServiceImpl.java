@@ -40,6 +40,7 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     //특정 쿠폰정책 조회)
     @Override
     public CouponPolicyResponseDto getCouponPolicy(Long couponPolicyId) {
+
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
 
