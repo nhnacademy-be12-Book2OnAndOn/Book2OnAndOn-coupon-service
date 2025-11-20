@@ -1,37 +1,33 @@
 package com.example.book2onandoncouponservice.repository;
 
-
 import com.example.book2onandoncouponservice.entity.Coupon;
-import com.example.book2onandoncouponservice.entity.CouponStatus;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
+import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
-    //사용자가 쿠폰 조회 시 할인율을 보여줘야 함
+    //관리자용 조회
     @EntityGraph(attributePaths = {"couponPolicy"})
-    List<Coupon> findByUserId(Long userId);
+    Page<Coupon> findAll(Pageable pageable);
 
-    //Pageable 고려
     @EntityGraph(attributePaths = {"couponPolicy"})
-    Page<Coupon> findByUserId(Long userId, Pageable pageable);
+    Optional<Coupon> findById(Long couponId);
 
-    // 상태별 조회
+    //사용자용 (발급 가능 여부 체크)
     @EntityGraph(attributePaths = {"couponPolicy"})
-    List<Coupon> findByUserIdAndCouponStatus(Long userId, CouponStatus couponStatus);
+    Page<Coupon> findByCouponPolicy_CouponPolicyStatusAndCouponIssueCountLessThanAndCouponPolicy_FixedEndDateGreaterThanEqual(
+            CouponPolicyStatus status, Integer totalQuantityThreshold, LocalDate fixedEndDate, Pageable pageable
+    );
 
-    // 중복 발급 체크
-    boolean existsByUserIdAndCouponPolicy_CouponPolicyId(Long userId, Long policyId);
-
-    // 주문 취소 시 복구용
-    Optional<Coupon> findByOrderId(Long orderId);
-
-    // 만료 처리 배치용 (Batch)
-    List<Coupon> findByCouponStatusAndEndDateBefore(CouponStatus status, LocalDateTime now);
-
+    //재고 차감 (동시성 제어용)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"couponPolicy"})
+    Optional<Coupon> findByIdForUpdate(Long couponId);
 }

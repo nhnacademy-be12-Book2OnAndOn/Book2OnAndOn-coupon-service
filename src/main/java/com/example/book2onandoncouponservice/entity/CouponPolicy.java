@@ -43,7 +43,7 @@ public class CouponPolicy {
     @NotNull
     @Column(name = "coupon_discount_type", length = 20)
     @Enumerated(EnumType.STRING)
-    private CouponDiscountType couponDiscountType;
+    private CouponPolicyDiscountType couponPolicyDiscountType;
 
     @NotNull
     @Column(name = "coupon_discount_value", precision = 10, scale = 2)
@@ -71,7 +71,7 @@ public class CouponPolicy {
     public CouponPolicy(CouponPolicyCreateRequestDto requestDto) {
         this.couponPolicyName = requestDto.getName();
         this.couponPolicyType = requestDto.getType();
-        this.couponDiscountType = requestDto.getDiscountType();
+        this.couponPolicyDiscountType = requestDto.getDiscountType();
         this.couponDiscountValue = requestDto.getDiscountValue();
         this.minPrice = requestDto.getMinPrice();
         this.maxPrice = requestDto.getMaxPrice();
@@ -91,8 +91,8 @@ public class CouponPolicy {
             this.couponPolicyType = requestDto.getCouponPolicyType();
         }
 
-        if (requestDto.getCouponDiscountType() != null) {
-            this.couponDiscountType = requestDto.getCouponDiscountType();
+        if (requestDto.getCouponPolicyDiscountType() != null) {
+            this.couponPolicyDiscountType = requestDto.getCouponPolicyDiscountType();
         }
 
         if (requestDto.getCouponDiscountValue() != null) {
@@ -122,6 +122,10 @@ public class CouponPolicy {
 
     public void deActive() {
         this.couponPolicyStatus = CouponPolicyStatus.DEACTIVE;
+    }
+
+    public boolean isIssuable() {
+        return this.couponPolicyStatus.equals(CouponPolicyStatus.ACTIVE);
     }
 
 }

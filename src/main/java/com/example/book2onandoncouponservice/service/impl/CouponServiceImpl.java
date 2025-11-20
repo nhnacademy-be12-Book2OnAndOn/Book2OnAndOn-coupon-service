@@ -1,105 +1,122 @@
 package com.example.book2onandoncouponservice.service.impl;
 
+import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
+import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.CouponRepository;
+import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.CouponService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
 public class CouponServiceImpl implements CouponService {
+    private final CouponPolicyRepository policyRepository;
     private final CouponRepository couponRepository;
-    private final CouponPolicyRepository couponPolicyRepository;
+    private final MemberCouponRepository memberCouponRepository;
 
-    //쿠폰 발급
     @Transactional
     @Override
-    public Long issueCoupon(Long userId, Long policyId) {
-
-        //정책조회
-        CouponPolicy couponPolicy = couponPolicyRepository.findById(policyId)
+    public Long createCouponUnit(CouponCreateRequestDto requestDto) {
+        CouponPolicy policy = policyRepository.findById(requestDto.getCouponPolicyId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 정책"));
 
-        //쿠폰 중복 발급 체크
-        if (couponRepository.existsByUserIdAndCouponPolicy_CouponPolicyId(userId, policyId)) {
-            throw new RuntimeException("이미 발급받은 쿠폰입니다.");
-        }
+        Coupon coupon = new Coupon(requestDto.getCoupon_total_quantity(), policy);
+        Coupon saveCoupon = couponRepository.save(coupon);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expirationDate = calculateExpirationDate(couponPolicy, now);
-
-        Coupon coupon = new Coupon(
-                couponPolicy.getCouponPolicyName(),
-                userId,
-                couponPolicy,
-                now,
-                expirationDate
-        );
-
-        return couponRepository.save(coupon).getCouponId();
+        return saveCoupon.getCouponId();
     }
 
-    //특정 사용자 쿠폰조회
+    @Transactional(readOnly = true)
     @Override
-    public List<CouponResponseDto> getMyCoupons(Long userId) {
+    public Page<CouponResponseDto> getCoupons(Pageable pageable) {
 
-        List<Coupon> coupons = couponRepository.findByUserId(userId);
+        Page<Coupon> coupons = couponRepository.findAll(pageable);
 
-        return coupons.stream()
-                .map(CouponResponseDto::new)
-                .collect(Collectors.toList());
+        return coupons.map(CouponResponseDto::new);
     }
 
-
-    //쿠폰사용
-    @Transactional
     @Override
-    public void useCoupon(Long couponId, Long orderId, Long userId) {
+    public CouponResponseDto getCouponDetail(Long couponId) {
 
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
 
-        //쿠폰 소유자인지 확인
-        if (!coupon.getUserId().equals(userId)) {
-            throw new RuntimeException("해당 쿠폰의 소유자가 아닙니다.");
-        }
-
-        coupon.use(orderId);
+        return new CouponResponseDto(coupon);
     }
 
-    //쿠폰사용 취소
+    @Transactional(readOnly = true)
+    @Override
+    public Page<CouponResponseDto> getAvailableCoupon(Pageable pageable) {
+        LocalDate today = LocalDate.now();
+
+        // 정책 상태, 재고 남았는지, 기간 유효한지 DB 쿼리에서 필터링
+        Page<Coupon> coupons = couponRepository.findByCouponPolicy_CouponPolicyStatusAndCouponIssueCountLessThanAndCouponPolicy_FixedEndDateGreaterThanEqual(
+                CouponPolicyStatus.ACTIVE, //CouponPolicyStatus
+                0, //CouponIssueCountLessThanAndCouponPolicy
+                today, //CouponPolicy_FixedEndDateGreaterThanEqual
+                pageable
+        );
+
+        return coupons.map(CouponResponseDto::new);
+    }
+
     @Transactional
     @Override
-    public void cancelCouponUsage(Long orderId) {
+    public Long issueMemberCoupon(Long userId, Long couponId) {
 
-        Coupon coupon = couponRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("해당 주문에 사용된 쿠폰이 아닙니다."));
+        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
 
-        //쿠폰 취소 메서드 호출
-        coupon.cancelUsage();
+        CouponPolicy couponPolicy = coupon.getCouponPolicy();
+
+        //유효한 정책인지 검증
+        if (!couponPolicy.isIssuable()) {
+            throw new RuntimeException("종료된 정책입니다.");
+        }
+
+        //중복발급 체크
+        if (memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)) {
+            throw new RuntimeException("이미 발급받은 쿠폰입니다.");
+        }
+
+        coupon.issue();
+
+        //만료일 계산
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endDate = calculateExpirationDate(couponPolicy, now);
+
+        MemberCoupon memberCoupon = new MemberCoupon(
+                userId,
+                coupon,
+                now,
+                endDate
+        );
+
+        MemberCoupon saveMemberCoupon = memberCouponRepository.save(memberCoupon);
+
+        return saveMemberCoupon.getMemberCouponId();
     }
 
-    private LocalDateTime calculateExpirationDate(CouponPolicy couponPolicy, LocalDateTime now) {
-        //고정 기간 정책인지 확인
-        if (couponPolicy.getFixedEndDate() != null) {
-            // ex) 2024-12-31 -> 2024-12-31 23:59:59.999999
-            // LocalTime.MAX 사용불가 MySQL의 DATETIME이 소수초를 6자리까지만 지원 / 나중에 DB에서 DATETIME fsp값 고려, 학습 필요
-            return couponPolicy.getFixedEndDate().atTime(23, 59, 59, 999999000);
+    private LocalDateTime calculateExpirationDate(CouponPolicy policy, LocalDateTime now) {
+        if (policy.getFixedEndDate() != null) {
+            // 고정 만료일 fixedEndDate
+            return policy.getFixedEndDate().atTime(23, 59, 59, 999999000);
         }
-
-        //유효 기간 정책인지 확인
-        if (couponPolicy.getDurationDays() != null) {
-            return now.plusDays(couponPolicy.getDurationDays());
+        if (policy.getDurationDays() != null) {
+            // 유효 기간 정책
+            return now.plusDays(policy.getDurationDays());
         }
-
-        throw new IllegalStateException("쿠폰 정책에 만료일 기준(FixedDate 또는 Duration)이 없습니다.");
+        throw new IllegalStateException("쿠폰 정책에 만료일 기준이 없습니다. policyId=" + policy.getCouponPolicyId());
     }
 }

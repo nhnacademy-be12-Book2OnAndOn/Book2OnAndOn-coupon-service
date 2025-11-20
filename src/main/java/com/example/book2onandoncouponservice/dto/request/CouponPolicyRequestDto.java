@@ -1,9 +1,8 @@
 package com.example.book2onandoncouponservice.dto.request;
 
-import com.example.book2onandoncouponservice.entity.CouponDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -17,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CouponPolicyRequestDto {
 
-    @NotBlank(message = "쿠폰 정책 이름은 필수입니다.")
+    @NotNull(message = "쿠폰 정책 이름은 필수입니다.")
     @Size(max = 50, message = "쿠폰 정책 이름은 50자 이내여야 합니다.")
     private String couponPolicyName;
 
@@ -25,7 +24,7 @@ public class CouponPolicyRequestDto {
     private CouponPolicyType couponPolicyType;
 
     @NotNull(message = "할인 타입은 필수입니다.")
-    private CouponDiscountType couponDiscountType;
+    private CouponPolicyDiscountType couponPolicyDiscountType;
 
     @NotNull(message = "할인 값은 필수입니다.")
     @Min(value = 0, message = "할인 값은 0 이상이어야 합니다.")

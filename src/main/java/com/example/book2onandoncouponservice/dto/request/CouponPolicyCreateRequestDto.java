@@ -1,6 +1,6 @@
 package com.example.book2onandoncouponservice.dto.request;
 
-import com.example.book2onandoncouponservice.entity.CouponDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +23,7 @@ public class CouponPolicyCreateRequestDto {
     private CouponPolicyType type;
 
     @NotNull(message = "쿠폰할인 형식은 필수입니다.")
-    private CouponDiscountType discountType;
+    private CouponPolicyDiscountType discountType;
 
     @NotNull(message = "할인율은 필수입니다.")
     @Min(value = 0, message = "할인율은 음수일 수 없습니다.")
