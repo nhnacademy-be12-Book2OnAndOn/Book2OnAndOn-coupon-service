@@ -9,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,43 +21,40 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "Coupon")
 public class Coupon {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "coupon_id")
     private Long couponId;
 
-    @Column(name = "coupon_total_quantity", nullable = false)
-    private Integer couponTotalQuantity;
-
-    @NotNull
-    @Column(name = "coupon_issue_count", nullable = false)
-    private Integer couponIssueCount = 0;
+    // 남은 재고 (null = 무제한)
+    @Column(name = "coupon_remaining_quantity")
+    private Integer couponRemainingQuantity;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_policy_id", nullable = false)
     private CouponPolicy couponPolicy;
 
-    //쿠폰 생성시 필요한 생성자 추가
-    public Coupon(Integer couponTotalQuantity, CouponPolicy couponPolicy) {
-        this.couponTotalQuantity = couponTotalQuantity;
+    // 생성자
+    public Coupon(Integer remainingQuantity, CouponPolicy couponPolicy) {
+        this.couponRemainingQuantity = remainingQuantity; // null이면 무제한
         this.couponPolicy = couponPolicy;
-        this.couponIssueCount = 0;
     }
 
-    public void issue() {
-        if (this.couponTotalQuantity != null && this.couponIssueCount >= this.couponTotalQuantity) {
-            throw new RuntimeException("쿠폰이 모두 소진되었습니다.");
+    // 재고 차감
+    public void decreaseStock() {
+        if (couponRemainingQuantity != null) {
+            if (couponRemainingQuantity <= 0) {
+                throw new RuntimeException("쿠폰 재고가 모두 소진되었습니다.");
+            }
+            couponRemainingQuantity--;
         }
-        
-        this.couponIssueCount++;
     }
 
-    public void rollback() {
-        if (this.couponIssueCount <= 0) {
-            throw new IllegalStateException("쿠폰 발급 오류");
+    // 롤백
+    public void increaseStock() {
+        if (couponRemainingQuantity != null) {
+            couponRemainingQuantity++;
         }
-        this.couponIssueCount--;
     }
-
-
 }

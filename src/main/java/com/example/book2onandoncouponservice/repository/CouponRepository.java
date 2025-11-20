@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
@@ -20,14 +22,22 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     @EntityGraph(attributePaths = {"couponPolicy"})
     Optional<Coupon> findById(Long couponId);
 
-    //사용자용 (발급 가능 여부 체크)
+    @Query("""
+            SELECT c
+            FROM Coupon c
+            WHERE c.couponPolicy.couponPolicyStatus = :status
+              AND (c.couponRemainingQuantity IS NULL OR c.couponRemainingQuantity > 0)
+              AND (c.couponPolicy.fixedEndDate IS NULL OR c.couponPolicy.fixedEndDate >= :today)
+            """)
     @EntityGraph(attributePaths = {"couponPolicy"})
-    Page<Coupon> findByCouponPolicy_CouponPolicyStatusAndCouponIssueCountLessThanAndCouponPolicy_FixedEndDateGreaterThanEqual(
-            CouponPolicyStatus status, Integer totalQuantityThreshold, LocalDate fixedEndDate, Pageable pageable
+    Page<Coupon> findAvailableCoupons(
+            @Param("status") CouponPolicyStatus status,
+            @Param("today") LocalDate today,
+            Pageable pageable
     );
 
-    //재고 차감 (동시성 제어용)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @EntityGraph(attributePaths = {"couponPolicy"})
-    Optional<Coupon> findByIdForUpdate(Long couponId);
+    @Query("SELECT c FROM Coupon c WHERE c.couponId = :couponId")
+    Optional<Coupon> findByIdForUpdate(@Param("couponId") Long couponId);
+
 }

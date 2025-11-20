@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class CouponServiceImpl implements CouponService {
+
     private final CouponPolicyRepository policyRepository;
     private final CouponRepository couponRepository;
     private final MemberCouponRepository memberCouponRepository;
@@ -31,27 +32,25 @@ public class CouponServiceImpl implements CouponService {
         CouponPolicy policy = policyRepository.findById(requestDto.getCouponPolicyId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 정책"));
 
-        Coupon coupon = new Coupon(requestDto.getCoupon_total_quantity(), policy);
-        Coupon saveCoupon = couponRepository.save(coupon);
-
-        return saveCoupon.getCouponId();
+        Coupon coupon = new Coupon(requestDto.getCouponRemainingQuantity(), policy);
+        Coupon savedCoupon = couponRepository.save(coupon);
+        return savedCoupon.getCouponId();
     }
 
+    // 전체 쿠폰 조회
     @Transactional(readOnly = true)
     @Override
     public Page<CouponResponseDto> getCoupons(Pageable pageable) {
-
         Page<Coupon> coupons = couponRepository.findAll(pageable);
-
         return coupons.map(CouponResponseDto::new);
     }
 
+
+    // 쿠폰 상세 조회
     @Override
     public CouponResponseDto getCouponDetail(Long couponId) {
-
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
-
         return new CouponResponseDto(coupon);
     }
 
@@ -59,15 +58,11 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Page<CouponResponseDto> getAvailableCoupon(Pageable pageable) {
         LocalDate today = LocalDate.now();
-
-        // 정책 상태, 재고 남았는지, 기간 유효한지 DB 쿼리에서 필터링
-        Page<Coupon> coupons = couponRepository.findByCouponPolicy_CouponPolicyStatusAndCouponIssueCountLessThanAndCouponPolicy_FixedEndDateGreaterThanEqual(
-                CouponPolicyStatus.ACTIVE, //CouponPolicyStatus
-                0, //CouponIssueCountLessThanAndCouponPolicy
-                today, //CouponPolicy_FixedEndDateGreaterThanEqual
+        Page<Coupon> coupons = couponRepository.findAvailableCoupons(
+                CouponPolicyStatus.ACTIVE,
+                today,
                 pageable
         );
-
         return coupons.map(CouponResponseDto::new);
     }
 
@@ -78,23 +73,20 @@ public class CouponServiceImpl implements CouponService {
         Coupon coupon = couponRepository.findByIdForUpdate(couponId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
 
-        CouponPolicy couponPolicy = coupon.getCouponPolicy();
+        CouponPolicy policy = coupon.getCouponPolicy();
 
-        //유효한 정책인지 검증
-        if (!couponPolicy.isIssuable()) {
+        if (!policy.isIssuable()) {
             throw new RuntimeException("종료된 정책입니다.");
         }
 
-        //중복발급 체크
         if (memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)) {
             throw new RuntimeException("이미 발급받은 쿠폰입니다.");
         }
 
-        coupon.issue();
+        coupon.decreaseStock();
 
-        //만료일 계산
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endDate = calculateExpirationDate(couponPolicy, now);
+        LocalDateTime endDate = calculateExpirationDate(policy, now);
 
         MemberCoupon memberCoupon = new MemberCoupon(
                 userId,
@@ -103,18 +95,17 @@ public class CouponServiceImpl implements CouponService {
                 endDate
         );
 
-        MemberCoupon saveMemberCoupon = memberCouponRepository.save(memberCoupon);
+        MemberCoupon savedMemberCoupon = memberCouponRepository.save(memberCoupon);
 
-        return saveMemberCoupon.getMemberCouponId();
+        return savedMemberCoupon.getMemberCouponId();
     }
 
+    //만료일 계산
     private LocalDateTime calculateExpirationDate(CouponPolicy policy, LocalDateTime now) {
         if (policy.getFixedEndDate() != null) {
-            // 고정 만료일 fixedEndDate
             return policy.getFixedEndDate().atTime(23, 59, 59, 999999000);
         }
         if (policy.getDurationDays() != null) {
-            // 유효 기간 정책
             return now.plusDays(policy.getDurationDays());
         }
         throw new IllegalStateException("쿠폰 정책에 만료일 기준이 없습니다. policyId=" + policy.getCouponPolicyId());
