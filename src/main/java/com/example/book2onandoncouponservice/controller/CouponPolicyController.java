@@ -27,10 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/coupon-policies")
 public class CouponPolicyController {
     private final CouponPolicyService couponPolicyService;
-    private static final String ADMIN_ROLE = "COUPON_ADMIN";
+    private static final String ADMIN_ROLE = "ROLE_COUPON_ADMIN";
+    private static final String SUPER_ROLE = "ROLE_SUPER_ADMIN";
 
     private void checkAuthorization(String userRole) {
-        if (!ADMIN_ROLE.equals(userRole)) {
+        if (!(ADMIN_ROLE.equals(userRole) || SUPER_ROLE.equals(userRole))) {
             log.warn("접근권한 없는 사용자 접근시도");
             throw new RuntimeException("접근권한이 없습니다.");
         }
