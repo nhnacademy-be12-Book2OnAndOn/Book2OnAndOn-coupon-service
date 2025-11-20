@@ -4,7 +4,6 @@ import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponStatus;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,10 +14,10 @@ public class CouponResponseDto {
     private Long couponId;
     private String couponName; // 정책 이름 또는 개별 쿠폰 이름
     private String discountDescription; // 예: "10% 할인" 또는 "3000원 할인"
-    private BigDecimal discountValue;
+    private Integer discountValue;
     private CouponDiscountType discountType;
-    private BigDecimal minPrice; // 사용 조건
-    private BigDecimal maxPrice; // 최대 할인 한도
+    private Integer minPrice; // 사용 조건
+    private Integer maxPrice; // 최대 할인 한도
     private LocalDateTime issuedDate;
     private LocalDateTime endDate; // 만료일
     private CouponStatus status; // 사용 가능 여부

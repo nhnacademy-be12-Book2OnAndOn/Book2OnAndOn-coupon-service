@@ -5,13 +5,11 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.aspectj.bridge.IMessage;
 
 @Getter
 @NoArgsConstructor
@@ -29,11 +27,11 @@ public class CouponPolicyCreateRequestDto {
 
     @NotNull(message = "할인율은 필수입니다.")
     @Min(value = 0, message = "할인율은 음수일 수 없습니다.")
-    private BigDecimal discountValue;
+    private Integer discountValue;
 
-    @Min(value = 0 , message = "최소구매금액은 음수일 수 없습니다.")
-    private BigDecimal minPrice;
-    private BigDecimal maxPrice;
+    @Min(value = 0, message = "최소구매금액은 음수일 수 없습니다.")
+    private Integer minPrice;
+    private Integer maxPrice;
     private Integer durationDays;
     private LocalDate fixedStartDate;
     private LocalDate fixedEndDate;
