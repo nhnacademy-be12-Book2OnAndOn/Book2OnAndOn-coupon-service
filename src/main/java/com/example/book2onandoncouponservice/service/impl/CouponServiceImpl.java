@@ -100,6 +100,18 @@ public class CouponServiceImpl implements CouponService {
         return savedMemberCoupon.getMemberCouponId();
     }
 
+    //쿠폰 수량 업데이트
+    @Transactional
+    @Override
+    public Integer updateAccount(Long couponId, Integer quantity) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
+
+        coupon.update(quantity);
+
+        return quantity;
+    }
+
     //만료일 계산
     private LocalDateTime calculateExpirationDate(CouponPolicy policy, LocalDateTime now) {
         if (policy.getFixedEndDate() != null) {

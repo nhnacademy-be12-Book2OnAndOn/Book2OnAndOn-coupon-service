@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.dto.response;
 
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +29,7 @@ public class CouponPolicyResponseDto {
 
     private List<Long> targetBookIds;
     private List<Long> targetCategoryIds;
+    private CouponPolicyStatus couponPolicyStatus;
 
     // Entity -> DTO 변환 메서드
     public CouponPolicyResponseDto(CouponPolicy entity, List<Long> targetBookIds, List<Long> targetCategoryIds) {
@@ -43,5 +45,6 @@ public class CouponPolicyResponseDto {
         this.fixedEndDate = entity.getFixedEndDate();
         this.targetBookIds = targetBookIds;
         this.targetCategoryIds = targetCategoryIds;
+        this.couponPolicyStatus = entity.getCouponPolicyStatus();
     }
 }

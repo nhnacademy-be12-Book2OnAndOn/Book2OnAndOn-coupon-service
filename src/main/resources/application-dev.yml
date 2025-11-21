@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:coupondb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 애플리케이션 시작 시 테이블 생성, 종료 시 삭제
+    properties:
+      hibernate:
+        format_sql: true        # SQL 출력
+        show_sql: true          # 콘솔에 SQL 출력
+        dialect: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true # data.sql 실행을 위해 필요
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console # 브라우저에서 http://localhost:8080/h2-console 로 접속 가능
