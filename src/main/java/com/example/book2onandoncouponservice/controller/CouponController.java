@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.controller;
 
 
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.repository.CouponRepository;
 import com.example.book2onandoncouponservice.service.CouponPolicyService;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,5 +79,10 @@ public class CouponController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
+    @PutMapping("/coupon/{couponId}")
+    public ResponseEntity<Integer> updateCoupon(
+            @PathVariable Long couponId,
+            @RequestBody CouponUpdateRequestDto request) {
+        return ResponseEntity.ok(couponService.updateAccount(couponId, request.getQuantity()));
+    }
 }

@@ -21,4 +21,7 @@ public interface CouponService {
 
     //사용자 쿠폰 발급
     Long issueMemberCoupon(Long userId, Long couponUnitId);
+
+    //쿠폰 수량 업데이트
+    Integer updateAccount(Long couponId, Integer account);
 }
