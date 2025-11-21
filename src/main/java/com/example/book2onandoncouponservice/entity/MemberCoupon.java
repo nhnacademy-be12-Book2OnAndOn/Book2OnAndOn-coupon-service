@@ -64,7 +64,7 @@ public class MemberCoupon {
         this.memberCouponEndDate = endDate;
     }
 
-    public void use(Long orderId) {
+    public void use() {
         if (this.memberCouponStatus != MemberCouponStatus.NOT_USED) {
             throw new IllegalStateException("이미 사용했거나 만료된 쿠폰입니다.");
         }
@@ -83,5 +83,17 @@ public class MemberCoupon {
 
         this.memberCouponStatus = MemberCouponStatus.NOT_USED;
         this.memberCouponUsedDate = null;
+    }
+
+    public void expired() {
+        if (this.memberCouponStatus == MemberCouponStatus.EXPIRED) {
+            throw new IllegalStateException("이미 만료된 쿠폰입니다.");
+        }
+
+        if (this.memberCouponStatus == MemberCouponStatus.USED) {
+            throw new IllegalStateException("이미 사용한 쿠폰입니다.");
+        }
+
+        this.memberCouponStatus = MemberCouponStatus.EXPIRED;
     }
 }
