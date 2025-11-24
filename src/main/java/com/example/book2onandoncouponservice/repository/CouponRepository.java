@@ -40,4 +40,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     @Query("SELECT c FROM Coupon c WHERE c.couponId = :couponId")
     Optional<Coupon> findByIdForUpdate(@Param("couponId") Long couponId);
 
+    //쿠폰정책 ID로 해당 쿠폰을 찾는 메서드
+    Optional<Coupon> findByCouponPolicy_CouponPolicyId(Long couponPolicyId);
 }

@@ -4,10 +4,9 @@ package com.example.book2onandoncouponservice.controller;
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
-import com.example.book2onandoncouponservice.repository.CouponRepository;
-import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import com.example.book2onandoncouponservice.service.CouponService;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,8 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CouponController {
 
     private final CouponService couponService;
-    private final CouponPolicyService couponPolicyService; // 정책 관련 API를 위해 추가
-    private final CouponRepository couponRepository;
 
     @GetMapping("/admin/coupons")
     public ResponseEntity<Page<CouponResponseDto>> getCoupons(
@@ -79,10 +76,24 @@ public class CouponController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/coupon/{couponId}")
+    @PutMapping("/coupons/{couponId}")
     public ResponseEntity<Integer> updateCoupon(
             @PathVariable Long couponId,
             @RequestBody CouponUpdateRequestDto request) {
         return ResponseEntity.ok(couponService.updateAccount(couponId, request.getQuantity()));
+    }
+
+    //신규회원 웰컴쿠폰 UserAPI에서 회원가입시 호출해줘야 함
+    @PostMapping("/coupons/welcome")
+    public ResponseEntity<Void> issueCoupon(@RequestBody Map<String, Long> requestMap) {
+        Long userId = requestMap.get("userId");
+
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        couponService.issueWelcomeCoupon(userId);
+        log.info("신규회원 WelcomeCoupon 지급 완료: UserId={}", userId);
+
+        return ResponseEntity.ok().build();
     }
 }

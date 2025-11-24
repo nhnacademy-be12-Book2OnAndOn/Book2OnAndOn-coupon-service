@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -20,7 +21,13 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "MemberCoupon")
+//쿠폰 중복 발급 방지를 위해 user_id와 coupon_id를 유니크 키로 설정
+@Table(name = "MemberCoupon", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "MEMBER_COUPON_UNIQUE",
+                columnNames = {"user_id", "coupon_id"}
+        )
+})
 public class MemberCoupon {
 
     @Id

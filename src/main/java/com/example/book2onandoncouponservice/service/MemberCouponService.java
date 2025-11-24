@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 public interface MemberCouponService {
 
     //보유 쿠폰 목록 조회
-    public Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable);
+    Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable);
 
     //쿠폰 사용
     void useMemberCoupon(Long memberCouponId, Long userId);

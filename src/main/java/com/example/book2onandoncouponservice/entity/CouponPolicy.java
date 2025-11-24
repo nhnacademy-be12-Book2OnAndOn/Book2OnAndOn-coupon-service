@@ -118,6 +118,10 @@ public class CouponPolicy {
         if (requestDto.getFixedEndDate() != null) {
             this.fixedEndDate = requestDto.getFixedEndDate();
         }
+
+        if (requestDto.getCouponPolicyStatus() != null) {
+            this.couponPolicyStatus = requestDto.getCouponPolicyStatus();
+        }
     }
 
     public void deActive() {

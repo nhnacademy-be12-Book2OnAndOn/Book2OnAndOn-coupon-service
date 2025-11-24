@@ -5,6 +5,7 @@ import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
+import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.CouponRepository;
@@ -13,11 +14,16 @@ import com.example.book2onandoncouponservice.service.CouponService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -110,6 +116,28 @@ public class CouponServiceImpl implements CouponService {
         coupon.update(quantity);
 
         return quantity;
+    }
+
+    //회원가입 시 웰컴쿠폰 지급
+    @Transactional
+    @Override
+    @Retryable(
+            value = {RuntimeException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
+    )
+    public void issueWelcomeCoupon(Long userId) {
+        CouponPolicy welcomePolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)
+                .orElseThrow(() -> new RuntimeException("WelcomeCoupon 정책이 존재하지 않습니다."));
+        Coupon welcomeCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(welcomePolicy.getCouponPolicyId())
+                .orElseThrow(() -> new RuntimeException("Welcome Coupon이 존재하지 않습니다."));
+
+        issueMemberCoupon(userId, welcomeCoupon.getCouponId());
+    }
+
+    @Recover
+    public void recover(RuntimeException e, Long userId) {
+        log.error("웰컴쿠폰 발급 실패: userId= {}", userId);
     }
 
     //만료일 계산

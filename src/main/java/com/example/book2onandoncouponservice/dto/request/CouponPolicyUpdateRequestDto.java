@@ -1,6 +1,7 @@
 package com.example.book2onandoncouponservice.dto.request;
 
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -41,4 +42,6 @@ public class CouponPolicyUpdateRequestDto {
     private List<Long> targetBookIds;
 
     private List<Long> targetCategoryIds;
+
+    private CouponPolicyStatus couponPolicyStatus;
 }
