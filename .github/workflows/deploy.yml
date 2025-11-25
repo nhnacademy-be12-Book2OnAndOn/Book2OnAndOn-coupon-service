@@ -2,7 +2,7 @@ name: CI/CD for Book Service
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
