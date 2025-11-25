@@ -50,7 +50,7 @@ X-USER-ID: 100
 
 ### 7. [사용자] 내 쿠폰함 조회 (보유 쿠폰 확인)
 GET http://localhost:8082/my-coupon?page=0&size=10
-X-USER-ID: 1
+X-USER-ID: 3
 
 ### 8. [사용자] 쿠폰 사용 (주문 결제 시)
 # 내 쿠폰 ID(MemberCouponId)가 1번이라고 가정

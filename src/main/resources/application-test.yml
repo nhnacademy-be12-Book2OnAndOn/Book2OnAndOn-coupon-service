@@ -22,3 +22,19 @@ spring:
     console:
       enabled: true
       path: /h2-console
+
+  # --- RabbitMQ 설정 ---
+  rabbitmq:
+    host: s4.java21.net
+    port: 5672
+    username: admin
+    password: nhnacademy123!
+
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+
+        default-requeue-rejected: false

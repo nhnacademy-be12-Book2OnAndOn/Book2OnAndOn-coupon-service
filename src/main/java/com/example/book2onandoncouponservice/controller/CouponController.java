@@ -6,7 +6,6 @@ import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.service.CouponService;
 import jakarta.validation.Valid;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -81,19 +80,5 @@ public class CouponController {
             @PathVariable Long couponId,
             @RequestBody CouponUpdateRequestDto request) {
         return ResponseEntity.ok(couponService.updateAccount(couponId, request.getQuantity()));
-    }
-
-    //신규회원 웰컴쿠폰 UserAPI에서 회원가입시 호출해줘야 함
-    @PostMapping("/coupons/welcome")
-    public ResponseEntity<Void> issueCoupon(@RequestBody Map<String, Long> requestMap) {
-        Long userId = requestMap.get("userId");
-
-        if (userId == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        couponService.issueWelcomeCoupon(userId);
-        log.info("신규회원 WelcomeCoupon 지급 완료: UserId={}", userId);
-
-        return ResponseEntity.ok().build();
     }
 }
