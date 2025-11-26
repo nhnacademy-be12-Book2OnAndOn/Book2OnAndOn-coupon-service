@@ -27,4 +27,7 @@ public interface CouponService {
 
     //웰컴쿠폰 지급
     void issueWelcomeCoupon(Long userId);
+
+    //생일쿠폰 지급
+    void issueBirthdayCoupon(Long userId);
 }

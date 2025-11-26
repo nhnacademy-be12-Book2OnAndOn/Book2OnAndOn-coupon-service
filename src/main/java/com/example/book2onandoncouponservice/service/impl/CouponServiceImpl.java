@@ -117,6 +117,7 @@ public class CouponServiceImpl implements CouponService {
 
     //회원가입 시 웰컴쿠폰 지급
     @Transactional
+    @Override
     public void issueWelcomeCoupon(Long userId) {
         CouponPolicy welcomePolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)
                 .orElseThrow(() -> new RuntimeException("WelcomeCoupon 정책이 존재하지 않습니다."));
@@ -126,6 +127,18 @@ public class CouponServiceImpl implements CouponService {
         issueMemberCoupon(userId, welcomeCoupon.getCouponId());
 
         log.info("웰컴 쿠폰 지급 성공 userId = {}", userId);
+    }
+
+    @Transactional
+    @Override
+    public void issueBirthdayCoupon(Long userId) {
+        CouponPolicy birthdayPolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.BIRTHDAY)
+                .orElseThrow(() -> new RuntimeException("BirthdayCoupon 정책이 존재하지 않습니다."));
+
+        Coupon birthdayCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(birthdayPolicy.getCouponPolicyId())
+                .orElseThrow(() -> new RuntimeException("Birthday Coupon이 존재하지 않습니다."));
+
+        issueMemberCoupon(userId, birthdayCoupon.getCouponId());
     }
 
     //만료일 계산
