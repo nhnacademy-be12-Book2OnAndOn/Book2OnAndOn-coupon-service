@@ -4,8 +4,6 @@ package com.example.book2onandoncouponservice.controller;
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
-import com.example.book2onandoncouponservice.repository.CouponRepository;
-import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import com.example.book2onandoncouponservice.service.CouponService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CouponController {
 
     private final CouponService couponService;
-    private final CouponPolicyService couponPolicyService; // 정책 관련 API를 위해 추가
-    private final CouponRepository couponRepository;
 
     @GetMapping("/admin/coupons")
     public ResponseEntity<Page<CouponResponseDto>> getCoupons(
@@ -79,7 +75,7 @@ public class CouponController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/coupon/{couponId}")
+    @PutMapping("/coupons/{couponId}")
     public ResponseEntity<Integer> updateCoupon(
             @PathVariable Long couponId,
             @RequestBody CouponUpdateRequestDto request) {

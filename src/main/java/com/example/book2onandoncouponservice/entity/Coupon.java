@@ -60,7 +60,7 @@ public class Coupon {
         }
     }
 
-    // 롤백
+    // 롤백 주문취소 시 호출 해줘야 함
     public void increaseStock() {
         if (couponRemainingQuantity != null) {
             couponRemainingQuantity++;

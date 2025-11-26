@@ -24,4 +24,7 @@ public interface CouponService {
 
     //쿠폰 수량 업데이트
     Integer updateAccount(Long couponId, Integer account);
+
+    //웰컴쿠폰 지급
+    void issueWelcomeCoupon(Long userId);
 }
