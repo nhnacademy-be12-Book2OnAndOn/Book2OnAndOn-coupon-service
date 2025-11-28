@@ -43,8 +43,18 @@ public class CouponServiceImpl implements CouponService {
     // 전체 쿠폰 조회
     @Transactional(readOnly = true)
     @Override
-    public Page<CouponResponseDto> getCoupons(Pageable pageable) {
-        Page<Coupon> coupons = couponRepository.findAll(pageable);
+    public Page<CouponResponseDto> getCoupons(Pageable pageable, String status) {
+
+        CouponPolicyStatus policyStatus = null;
+
+        if (status != null && !status.isEmpty() && !status.equals("ALL")) {
+            try {
+                policyStatus = CouponPolicyStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+        Page<Coupon> coupons = couponRepository.findAllByPolicyStatus(policyStatus, pageable);
+
         return coupons.map(CouponResponseDto::new);
     }
 

@@ -16,8 +16,10 @@ import org.springframework.data.repository.query.Param;
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     //관리자용 조회
-    @EntityGraph(attributePaths = {"couponPolicy"})
-    Page<Coupon> findAll(Pageable pageable);
+    @Query("SELECT c FROM Coupon c " +
+            "JOIN FETCH c.couponPolicy p " + // N+1 문제 방지
+            "WHERE (:status IS NULL OR p.couponPolicyStatus = :status)")
+    Page<Coupon> findAllByPolicyStatus(@Param("status") CouponPolicyStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"couponPolicy"})
     Optional<Coupon> findById(Long couponId);

@@ -1,22 +1,32 @@
 package com.example.book2onandoncouponservice.repository;
 
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, Long> {
-    List<CouponPolicy> findAllBy();
 
-    Page<CouponPolicy> findAll(Pageable pageable);
+    @Query("SELECT p FROM CouponPolicy p " +
+            "WHERE (:type IS NULL OR p.couponPolicyType = :type) " +
+            "AND (:discountType IS NULL OR p.couponPolicyDiscountType = :discountType) " +
+            "AND (:status IS NULL OR p.couponPolicyStatus = :status)")
+    Page<CouponPolicy> findAllByFilters(
+            @Param("type") CouponPolicyType type,
+            @Param("discountType") CouponPolicyDiscountType discountType,
+            @Param("status") CouponPolicyStatus status,
+            Pageable pageable
+    );
 
     //정책 중복 방지
     boolean existsByCouponPolicyName(String couponPolicyName);
 
     Optional<CouponPolicy> findByCouponPolicyType(CouponPolicyType couponPolicyType);
 
-    //서비스 작성하면서 필요한 메서드 추가 예정
 }
