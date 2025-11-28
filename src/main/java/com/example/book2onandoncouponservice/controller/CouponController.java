@@ -47,6 +47,14 @@ public class CouponController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    //쿠폰 갯수 수정
+    @PutMapping("/admin/coupons/{couponId}")
+    public ResponseEntity<Integer> updateCoupon(
+            @PathVariable Long couponId,
+            @RequestBody CouponUpdateRequestDto request) {
+        return ResponseEntity.ok(couponService.updateAccount(couponId, request.getQuantity()));
+    }
+
     //사용자 조회용
     @GetMapping("/coupons")
     public ResponseEntity<Page<CouponResponseDto>> availableCoupon(Pageable pageable) {
@@ -75,10 +83,4 @@ public class CouponController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/coupons/{couponId}")
-    public ResponseEntity<Integer> updateCoupon(
-            @PathVariable Long couponId,
-            @RequestBody CouponUpdateRequestDto request) {
-        return ResponseEntity.ok(couponService.updateAccount(couponId, request.getQuantity()));
-    }
 }
