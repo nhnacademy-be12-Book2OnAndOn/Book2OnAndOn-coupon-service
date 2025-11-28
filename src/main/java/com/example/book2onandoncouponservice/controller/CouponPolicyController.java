@@ -2,6 +2,9 @@ package com.example.book2onandoncouponservice.controller;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
+import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -27,9 +31,15 @@ public class CouponPolicyController {
     private final CouponPolicyService couponPolicyService;
 
     @GetMapping
-    public ResponseEntity<Page<CouponPolicyResponseDto>> getPolicies(Pageable pageable) {
+    public ResponseEntity<Page<CouponPolicyResponseDto>> getPolicies(
+            @RequestParam(required = false) CouponPolicyType type,
+            @RequestParam(required = false) CouponPolicyDiscountType discountType,
+            @RequestParam(required = false) CouponPolicyStatus status,
+            Pageable pageable) {
 
-        Page<CouponPolicyResponseDto> policies = couponPolicyService.getCouponPolicies(pageable);
+        Page<CouponPolicyResponseDto> policies = couponPolicyService.getCouponPolicies(type, discountType, status,
+                pageable);
+
         return ResponseEntity.ok(policies);
     }
 

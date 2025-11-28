@@ -11,7 +11,7 @@ public interface CouponService {
     Long createCouponUnit(CouponCreateRequestDto requestDto);
 
     //관리자용 모든 쿠폰 목록 조회
-    Page<CouponResponseDto> getCoupons(Pageable pageable);
+    Page<CouponResponseDto> getCoupons(Pageable pageable, String status);
 
     //특정 쿠폰 조회
     CouponResponseDto getCouponDetail(Long couponUnitId);
