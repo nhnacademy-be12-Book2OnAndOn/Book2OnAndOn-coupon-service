@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 //쿠폰 중복 발급 방지를 위해 user_id와 coupon_id를 유니크 키로 설정
-@Table(name = "MemberCoupon", uniqueConstraints = {
+@Table(name = "member_coupon", uniqueConstraints = {
         @UniqueConstraint(
                 name = "MEMBER_COUPON_UNIQUE",
                 columnNames = {"user_id", "coupon_id"}

@@ -19,7 +19,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "Coupon")
+@Table(name = "coupon")
 public class Coupon {
 
     @Id

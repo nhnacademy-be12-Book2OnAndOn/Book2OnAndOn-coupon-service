@@ -1,40 +1,40 @@
-server:
-  port: 8082
-
-spring:
-  datasource:
-    url: jdbc:h2:mem:coupondb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
-    defer-datasource-initialization: true
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
-  # --- RabbitMQ 설정 ---
-  rabbitmq:
-    host: s4.java21.net
-    port: 5672
-    username: admin
-    password: nhnacademy123!
-
-    listener:
-      simple:
-        retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 1000ms
-
-        default-requeue-rejected: false
+#server:
+#  port: 8082
+#
+#spring:
+#  datasource:
+#    url: jdbc:h2:mem:coupondb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: create-drop
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        show_sql: true
+#        dialect: org.hibernate.dialect.H2Dialect
+#    defer-datasource-initialization: true
+#
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#
+#  # --- RabbitMQ 설정 ---
+#  rabbitmq:
+#    host: s4.java21.net
+#    port: 5672
+#    username: admin
+#    password: nhnacademy123!
+#
+#    listener:
+#      simple:
+#        retry:
+#          enabled: true
+#          max-attempts: 3
+#          initial-interval: 1000ms
+#
+#        default-requeue-rejected: false
