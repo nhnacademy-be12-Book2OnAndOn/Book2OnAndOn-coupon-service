@@ -1,7 +1,6 @@
 package com.example.book2onandoncouponservice.controller;
 
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import jakarta.validation.Valid;
@@ -45,7 +44,7 @@ public class CouponPolicyController {
 
     @PostMapping
     public ResponseEntity<Void> createPolicy(
-            @Valid @RequestBody CouponPolicyCreateRequestDto requestDto) {
+            @Valid @RequestBody CouponPolicyRequestDto requestDto) {
 
         Long policyId = couponPolicyService.createPolicy(requestDto);
         log.info("쿠폰정책 생성 완료: {}", policyId);
@@ -56,7 +55,7 @@ public class CouponPolicyController {
     @PutMapping("/{couponPolicyId}")
     public ResponseEntity<Void> updatePolicy(
             @PathVariable Long couponPolicyId,
-            @Valid @RequestBody CouponPolicyUpdateRequestDto requestDto) {
+            @Valid @RequestBody CouponPolicyRequestDto requestDto) {
 
         couponPolicyService.updatePolicy(couponPolicyId, requestDto);
         log.info("쿠폰정책 수정완료: {}", couponPolicyId);

@@ -1,7 +1,6 @@
 package com.example.book2onandoncouponservice.entity;
 
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,7 +22,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "CouponPolicy")
+@Table(name = "coupon_policy")
 public class CouponPolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,13 +65,14 @@ public class CouponPolicy {
     private LocalDate fixedEndDate;
 
     @Column(name = "coupon_policy_status")
+    @Enumerated(EnumType.STRING)
     private CouponPolicyStatus couponPolicyStatus;
 
-    public CouponPolicy(CouponPolicyCreateRequestDto requestDto) {
-        this.couponPolicyName = requestDto.getName();
-        this.couponPolicyType = requestDto.getType();
-        this.couponPolicyDiscountType = requestDto.getDiscountType();
-        this.couponDiscountValue = requestDto.getDiscountValue();
+    public CouponPolicy(CouponPolicyRequestDto requestDto) {
+        this.couponPolicyName = requestDto.getCouponPolicyName();
+        this.couponPolicyType = requestDto.getCouponPolicyType();
+        this.couponPolicyDiscountType = requestDto.getCouponPolicyDiscountType();
+        this.couponDiscountValue = requestDto.getCouponDiscountValue();
         this.minPrice = requestDto.getMinPrice();
         this.maxPrice = requestDto.getMaxPrice();
         this.durationDays = requestDto.getDurationDays();
@@ -81,7 +81,7 @@ public class CouponPolicy {
         this.couponPolicyStatus = CouponPolicyStatus.ACTIVE;
     }
 
-    public void updatePolicy(CouponPolicyUpdateRequestDto requestDto) {
+    public void updatePolicy(CouponPolicyRequestDto requestDto) {
 
         if (requestDto.getCouponPolicyName() != null) {
             this.couponPolicyName = requestDto.getCouponPolicyName();
@@ -117,10 +117,6 @@ public class CouponPolicy {
 
         if (requestDto.getFixedEndDate() != null) {
             this.fixedEndDate = requestDto.getFixedEndDate();
-        }
-
-        if (requestDto.getCouponPolicyStatus() != null) {
-            this.couponPolicyStatus = requestDto.getCouponPolicyStatus();
         }
     }
 

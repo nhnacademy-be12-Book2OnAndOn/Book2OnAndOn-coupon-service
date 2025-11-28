@@ -1,7 +1,6 @@
 package com.example.book2onandoncouponservice.service.impl;
 
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyCreateRequestDto;
-import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
@@ -61,8 +60,8 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     //쿠폰정책 생성
     @Transactional
     @Override
-    public Long createPolicy(CouponPolicyCreateRequestDto requestDto) {
-        if (couponPolicyRepository.existsByCouponPolicyName(requestDto.getName())) {
+    public Long createPolicy(CouponPolicyRequestDto requestDto) {
+        if (couponPolicyRepository.existsByCouponPolicyName(requestDto.getCouponPolicyName())) {
             throw new IllegalStateException("이미 존재하는 쿠폰 정책 이름입니다.");
         }
 
@@ -79,7 +78,7 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     //쿠폰정책 업데이트
     @Transactional
     @Override
-    public void updatePolicy(Long couponPolicyId, CouponPolicyUpdateRequestDto requestDto) {
+    public void updatePolicy(Long couponPolicyId, CouponPolicyRequestDto requestDto) {
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
 
