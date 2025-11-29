@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.service.impl;
 
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
+import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +19,18 @@ public class MemberCouponServiceImpl implements MemberCouponService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable) {
+    public Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable, String status) {
 
-        Page<MemberCoupon> myCoupons = memberCouponRepository.findCouponsWithPolicy(userId, pageable);
+        MemberCouponStatus searchStatus = null;
+
+        if (status != null && !status.isEmpty() && !status.equals("ALL")) {
+            try {
+                searchStatus = MemberCouponStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
+        Page<MemberCoupon> myCoupons = memberCouponRepository.findCouponsWithPolicy(userId, searchStatus, pageable);
 
         return myCoupons.map(MemberCouponResponseDto::new);
     }

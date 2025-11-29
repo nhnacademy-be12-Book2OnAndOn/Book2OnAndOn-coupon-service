@@ -4,11 +4,12 @@ package com.example.book2onandoncouponservice.service;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface MemberCouponService {
-
-    //보유 쿠폰 목록 조회
-    Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable);
+    
+    @Transactional(readOnly = true)
+    Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable, String status);
 
     //쿠폰 사용
     void useMemberCoupon(Long memberCouponId, Long userId);
