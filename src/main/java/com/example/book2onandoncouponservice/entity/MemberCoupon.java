@@ -1,5 +1,7 @@
 package com.example.book2onandoncouponservice.entity;
 
+import com.example.book2onandoncouponservice.exception.CouponErrorCode;
+import com.example.book2onandoncouponservice.exception.CouponUseException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -72,11 +74,14 @@ public class MemberCoupon {
     }
 
     public void use() {
-        if (this.memberCouponStatus != MemberCouponStatus.NOT_USED) {
-            throw new IllegalStateException("이미 사용했거나 만료된 쿠폰입니다.");
+
+        if (this.memberCouponStatus == MemberCouponStatus.USED) {
+            throw new CouponUseException(CouponErrorCode.COUPON_ALREADY_USED);
         }
-        if (LocalDateTime.now().isAfter(this.memberCouponEndDate)) {
-            throw new IllegalStateException("유효 기간이 지난 쿠폰입니다.");
+
+        if (this.memberCouponStatus == MemberCouponStatus.EXPIRED ||
+                LocalDateTime.now().isAfter(this.memberCouponEndDate)) {
+            throw new CouponUseException(CouponErrorCode.COUPON_EXPIRED);
         }
 
         this.memberCouponStatus = MemberCouponStatus.USED;
@@ -85,7 +90,7 @@ public class MemberCoupon {
 
     public void cancelUsage() {
         if (this.memberCouponStatus != MemberCouponStatus.USED) {
-            throw new IllegalStateException("사용된 쿠폰만 취소할 수 있습니다.");
+            throw new CouponUseException(CouponErrorCode.COUPON_NOT_USED);
         }
 
         this.memberCouponStatus = MemberCouponStatus.NOT_USED;
@@ -93,12 +98,10 @@ public class MemberCoupon {
     }
 
     public void expired() {
-        if (this.memberCouponStatus == MemberCouponStatus.EXPIRED) {
-            throw new IllegalStateException("이미 만료된 쿠폰입니다.");
-        }
 
-        if (this.memberCouponStatus == MemberCouponStatus.USED) {
-            throw new IllegalStateException("이미 사용한 쿠폰입니다.");
+        if (this.memberCouponStatus == MemberCouponStatus.EXPIRED
+                || this.memberCouponStatus == MemberCouponStatus.USED) {
+            return;
         }
 
         this.memberCouponStatus = MemberCouponStatus.EXPIRED;
