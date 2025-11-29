@@ -8,6 +8,7 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
+import com.example.book2onandoncouponservice.exception.CouponPolicyNotFoundException;
 import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.CouponPolicyTargetBookRepository;
 import com.example.book2onandoncouponservice.repository.CouponPolicyTargetCategoryRepository;
@@ -48,7 +49,7 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     public CouponPolicyResponseDto getCouponPolicy(Long couponPolicyId) {
 
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
+                .orElseThrow(CouponPolicyNotFoundException::new);
 
         List<Long> bookIds = targetBookRepository.findAllByCouponPolicy_CouponPolicyId(couponPolicyId)
                 .stream()
@@ -68,9 +69,6 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     @Transactional
     @Override
     public Long createPolicy(CouponPolicyRequestDto requestDto) {
-        if (couponPolicyRepository.existsByCouponPolicyName(requestDto.getCouponPolicyName())) {
-            throw new IllegalStateException("이미 존재하는 쿠폰 정책 이름입니다.");
-        }
 
         CouponPolicy policy = new CouponPolicy(requestDto);
         CouponPolicy savedPolicy = couponPolicyRepository.save(policy);

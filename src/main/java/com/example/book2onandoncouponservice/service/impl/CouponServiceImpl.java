@@ -7,6 +7,10 @@ import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
+import com.example.book2onandoncouponservice.exception.CouponErrorCode;
+import com.example.book2onandoncouponservice.exception.CouponIssueException;
+import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
+import com.example.book2onandoncouponservice.exception.CouponPolicyNotFoundException;
 import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.CouponRepository;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
@@ -33,7 +37,11 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Long createCouponUnit(CouponCreateRequestDto requestDto) {
         CouponPolicy policy = policyRepository.findById(requestDto.getCouponPolicyId())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 정책"));
+                .orElseThrow(CouponPolicyNotFoundException::new);
+
+        if (policy.getCouponPolicyStatus() == CouponPolicyStatus.DEACTIVE) {
+            throw new CouponIssueException(CouponErrorCode.POLICY_NOT_ISSUABLE);
+        }
 
         Coupon coupon = new Coupon(requestDto.getCouponRemainingQuantity(), policy);
         Coupon savedCoupon = couponRepository.save(coupon);
@@ -63,7 +71,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public CouponResponseDto getCouponDetail(Long couponId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
+                .orElseThrow(CouponNotFoundException::new);
         return new CouponResponseDto(coupon);
     }
 
@@ -84,16 +92,16 @@ public class CouponServiceImpl implements CouponService {
     public Long issueMemberCoupon(Long userId, Long couponId) {
 
         Coupon coupon = couponRepository.findByIdForUpdate(couponId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
+                .orElseThrow(CouponNotFoundException::new);
 
         CouponPolicy policy = coupon.getCouponPolicy();
 
         if (!policy.isIssuable()) {
-            throw new RuntimeException("종료된 정책입니다.");
+            throw new CouponIssueException(CouponErrorCode.POLICY_NOT_ISSUABLE);
         }
 
         if (memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)) {
-            throw new RuntimeException("이미 발급받은 쿠폰입니다.");
+            throw new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED);
         }
 
         coupon.decreaseStock();
@@ -118,7 +126,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Integer updateAccount(Long couponId, Integer quantity) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰입니다."));
+                .orElseThrow(CouponNotFoundException::new);
 
         coupon.update(quantity);
 
@@ -130,9 +138,9 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public void issueWelcomeCoupon(Long userId) {
         CouponPolicy welcomePolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)
-                .orElseThrow(() -> new RuntimeException("WelcomeCoupon 정책이 존재하지 않습니다."));
+                .orElseThrow(CouponPolicyNotFoundException::new);
         Coupon welcomeCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(welcomePolicy.getCouponPolicyId())
-                .orElseThrow(() -> new RuntimeException("Welcome Coupon이 존재하지 않습니다."));
+                .orElseThrow(CouponNotFoundException::new);
 
         issueMemberCoupon(userId, welcomeCoupon.getCouponId());
 
@@ -143,10 +151,10 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public void issueBirthdayCoupon(Long userId) {
         CouponPolicy birthdayPolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.BIRTHDAY)
-                .orElseThrow(() -> new RuntimeException("BirthdayCoupon 정책이 존재하지 않습니다."));
+                .orElseThrow(CouponPolicyNotFoundException::new);
 
         Coupon birthdayCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(birthdayPolicy.getCouponPolicyId())
-                .orElseThrow(() -> new RuntimeException("Birthday Coupon이 존재하지 않습니다."));
+                .orElseThrow(CouponNotFoundException::new);
 
         issueMemberCoupon(userId, birthdayCoupon.getCouponId());
     }

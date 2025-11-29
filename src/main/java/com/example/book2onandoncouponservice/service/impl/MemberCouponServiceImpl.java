@@ -3,6 +3,9 @@ package com.example.book2onandoncouponservice.service.impl;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
+import com.example.book2onandoncouponservice.exception.CouponErrorCode;
+import com.example.book2onandoncouponservice.exception.CouponIssueException;
+import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +43,10 @@ public class MemberCouponServiceImpl implements MemberCouponService {
     public void useMemberCoupon(Long memberCouponId, Long userId) {
 
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 쿠폰입니다."));
+                .orElseThrow(CouponNotFoundException::new);
 
         if (!memberCoupon.getUserId().equals(userId)) {
-            throw new RuntimeException("해당 쿠폰의 소유자가 아닙니다.");
+            throw new CouponIssueException(CouponErrorCode.NOT_COUPON_OWNER);
         }
 
         memberCoupon.use();
@@ -54,7 +57,7 @@ public class MemberCouponServiceImpl implements MemberCouponService {
     public void cancelMemberCoupon(Long memberCouponId, Long userId) {
 
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 쿠폰입니다."));
+                .orElseThrow(CouponNotFoundException::new);
         memberCoupon.cancelUsage();
     }
 }
