@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,10 +28,13 @@ public class MemberCouponController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<MemberCouponResponseDto>> getCoupon(
+    public ResponseEntity<Page<MemberCouponResponseDto>> getMyCoupons(
             @RequestHeader("X-USER-ID") Long userId,
-            Pageable pageable) {
-        Page<MemberCouponResponseDto> coupons = memberCouponService.getMyCoupon(userId, pageable);
+            Pageable pageable,
+            @RequestParam(required = false) String status) {
+        
+        Page<MemberCouponResponseDto> coupons = memberCouponService.getMyCoupon(userId, pageable, status);
+
         return ResponseEntity.ok(coupons);
     }
 
