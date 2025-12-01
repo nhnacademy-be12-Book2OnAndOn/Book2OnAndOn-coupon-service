@@ -2,8 +2,10 @@ package com.example.book2onandoncouponservice.service;
 
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface CouponService {
 
@@ -30,4 +32,8 @@ public interface CouponService {
 
     //생일쿠폰 지급
     void issueBirthdayCoupon(Long userId);
+
+    //적용가능한 쿠폰 확인
+    @Transactional(readOnly = true)
+    List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds);
 }
