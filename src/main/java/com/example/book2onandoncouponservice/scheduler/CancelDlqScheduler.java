@@ -11,33 +11,33 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class BirthdayDlqScheduler {
+public class CancelDlqScheduler {
     private final RabbitTemplate rabbitTemplate;
 
     @Scheduled(cron = "0 0 0 * * * ")
     @SchedulerLock(
-            name = "birth_coupon_task",
+            name = "cancel_coupon_task",
             lockAtLeastFor = "30s",
             lockAtMostFor = "10m"
     )
-    public void birthdayDlq() {
-        log.info("Birthday.dlq 처리 스케줄러 시작");
+    public void cancelCouponDlq() {
+        log.info("cancel.coupon.dlq 처리 스케줄러 시작");
 
         while (true) {
-            Object message = rabbitTemplate.receiveAndConvert(RabbitConfig.QUEUE_BIRTHDAY_DLQ);
+            Object message = rabbitTemplate.receiveAndConvert(RabbitConfig.QUEUE_CANCEL_DLQ);
 
             if (message == null) {
                 log.info("DLQ가 비어있습니다. 스케줄러 종료");
                 break;
             }
 
-            Long userId = (Long) message;
-            log.info("원본 큐로 복구 userId: {}", userId);
+            Long orderId = (Long) message;
+            log.info("원본 큐로 복구 userId: {}", orderId);
 
             rabbitTemplate.convertAndSend(
-                    RabbitConfig.USER_EXCHANGE,
-                    RabbitConfig.ROUTING_KEY_BIRTHDAY,
-                    userId
+                    RabbitConfig.ORDER_EXCHANGE,
+                    RabbitConfig.ROUTING_KEY_CANCEL,
+                    orderId
             );
         }
     }

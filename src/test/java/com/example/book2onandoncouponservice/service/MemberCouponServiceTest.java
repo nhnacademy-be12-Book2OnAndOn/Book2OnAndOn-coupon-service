@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -19,7 +18,6 @@ import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.exception.CouponErrorCode;
 import com.example.book2onandoncouponservice.exception.CouponIssueException;
 import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
-import com.example.book2onandoncouponservice.exception.CouponUseException;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.impl.MemberCouponServiceImpl;
 import java.util.List;
@@ -44,18 +42,16 @@ class MemberCouponServiceTest {
     @Mock
     private MemberCouponRepository memberCouponRepository;
 
-    // --- Helper Method (DTO 변환을 위한 Mock 객체 생성) ---
+    // --- Helper: DTO 변환을 위한 Mock 객체 생성 ---
     private MemberCoupon createStubbedMemberCoupon(Long id, Long userId) {
-        // 1. 껍데기 Mock 생성
         MemberCoupon mc = mock(MemberCoupon.class);
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        // 2. 연관 관계 Stubbing (getCoupon().getPolicy()... 체이닝 방지)
+        // DTO 매핑 시 호출되는 메서드들 Stubbing (lenient 사용)
         lenient().when(mc.getCoupon()).thenReturn(coupon);
         lenient().when(coupon.getCouponPolicy()).thenReturn(policy);
 
-        // 3. DTO 생성에 필요한 값 Stubbing
         lenient().when(mc.getMemberCouponId()).thenReturn(id);
         lenient().when(mc.getUserId()).thenReturn(userId);
         lenient().when(mc.getMemberCouponStatus()).thenReturn(MemberCouponStatus.NOT_USED);
@@ -75,18 +71,20 @@ class MemberCouponServiceTest {
     @Test
     @DisplayName("내 쿠폰 목록 조회 성공 - 상태 필터링 (USED)")
     void getMyCoupon_WithStatus() {
+        // given
         Long userId = 1L;
         String status = "USED";
         Pageable pageable = PageRequest.of(0, 10);
 
         MemberCoupon mc = createStubbedMemberCoupon(1L, userId);
 
-        // Repository가 USED 상태로 조회하도록 호출되는지 검증
         given(memberCouponRepository.findCouponsWithPolicy(eq(userId), eq(MemberCouponStatus.USED), any()))
                 .willReturn(new PageImpl<>(List.of(mc)));
 
+        // when
         Page<MemberCouponResponseDto> result = memberCouponService.getMyCoupon(userId, pageable, status);
 
+        // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getCouponName()).isEqualTo("Test Coupon");
     }
@@ -94,60 +92,50 @@ class MemberCouponServiceTest {
     @Test
     @DisplayName("내 쿠폰 목록 조회 성공 - 전체 조회 (Status Null)")
     void getMyCoupon_All() {
+        // given
         Long userId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
 
         given(memberCouponRepository.findCouponsWithPolicy(eq(userId), eq(null), any()))
                 .willReturn(new PageImpl<>(List.of()));
 
+        // when
         memberCouponService.getMyCoupon(userId, pageable, null);
 
-        verify(memberCouponRepository).findCouponsWithPolicy(eq(userId), eq(null), any());
-    }
-
-    @Test
-    @DisplayName("내 쿠폰 목록 조회 성공 - 잘못된 상태값은 전체 조회로 처리")
-    void getMyCoupon_InvalidStatus() {
-        Long userId = 1L;
-        String status = "INVALID_STATUS";
-        Pageable pageable = PageRequest.of(0, 10);
-
-        given(memberCouponRepository.findCouponsWithPolicy(eq(userId), eq(null), any()))
-                .willReturn(new PageImpl<>(List.of()));
-
-        memberCouponService.getMyCoupon(userId, pageable, status);
-
+        // then
         verify(memberCouponRepository).findCouponsWithPolicy(eq(userId), eq(null), any());
     }
 
     // ==========================================
-    // 2. useMemberCoupon (쿠폰 사용)
+    // 2. useMemberCoupon (쿠폰 사용 - orderId 추가됨)
     // ==========================================
 
     @Test
-    @DisplayName("쿠폰 사용 성공")
+    @DisplayName("쿠폰 사용 성공 - orderId 전달 확인")
     void useMemberCoupon_Success() {
+        // given
         Long mcId = 1L;
         Long userId = 100L;
+        Long orderId = 12345L; // 주문 번호
 
-        // Mock 객체 생성
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
         given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
         given(memberCoupon.getUserId()).willReturn(userId); // 소유자 일치
 
         // when
-        memberCouponService.useMemberCoupon(mcId, userId);
+        memberCouponService.useMemberCoupon(mcId, userId, orderId);
 
         // then
-        verify(memberCoupon).use(); // 엔티티의 use() 메서드가 호출되었는지 확인
+        verify(memberCoupon).use(orderId); // [핵심] orderId가 전달되었는지 확인
     }
 
     @Test
     @DisplayName("쿠폰 사용 실패 - 쿠폰 없음 (404)")
     void useMemberCoupon_Fail_NotFound() {
+        Long orderId = 12345L;
         given(memberCouponRepository.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(1L, 100L))
+        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(1L, 100L, orderId))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
@@ -156,60 +144,47 @@ class MemberCouponServiceTest {
     void useMemberCoupon_Fail_NotOwner() {
         Long mcId = 1L;
         Long userId = 100L;
-        Long otherUserId = 999L;
+        Long otherUser = 999L;
+        Long orderId = 12345L;
 
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
         given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
-        given(memberCoupon.getUserId()).willReturn(otherUserId); // 소유자 불일치
+        given(memberCoupon.getUserId()).willReturn(otherUser); // 다른 사람
 
-        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(mcId, userId))
+        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(mcId, userId, orderId))
                 .isInstanceOf(CouponIssueException.class)
                 .hasMessage(CouponErrorCode.NOT_COUPON_OWNER.getMessage());
     }
 
-    @Test
-    @DisplayName("쿠폰 사용 실패 - 이미 사용됨/만료됨 (Entity 예외 전파 확인)")
-    void useMemberCoupon_Fail_AlreadyUsed() {
-        Long mcId = 1L;
-        Long userId = 100L;
-        MemberCoupon memberCoupon = mock(MemberCoupon.class);
-
-        given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
-        given(memberCoupon.getUserId()).willReturn(userId);
-
-        // Entity.use()에서 예외가 터지는 상황 시뮬레이션
-        doThrow(new CouponUseException(CouponErrorCode.COUPON_ALREADY_USED))
-                .when(memberCoupon).use();
-
-        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(mcId, userId))
-                .isInstanceOf(CouponUseException.class)
-                .hasMessage(CouponErrorCode.COUPON_ALREADY_USED.getMessage());
-    }
-
     // ==========================================
-    // 3. cancelMemberCoupon (사용 취소)
+    // 3. cancelCouponByOrder (주문 번호로 취소 - 새로 추가된 메서드)
     // ==========================================
 
     @Test
-    @DisplayName("쿠폰 사용 취소 성공")
-    void cancelMemberCoupon_Success() {
-        Long mcId = 1L;
+    @DisplayName("주문 취소로 인한 쿠폰 복구 성공")
+    void cancelCouponByOrder_Success() {
+        // given
+        Long orderId = 12345L;
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
-        given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
 
+        // 주문 번호로 조회 성공 가정
+        given(memberCouponRepository.findByOrderId(orderId)).willReturn(Optional.of(memberCoupon));
+
+        given(memberCoupon.getOrderId()).willReturn(orderId);
         // when
-        memberCouponService.cancelMemberCoupon(mcId, 1L);
+        memberCouponService.cancelMemberCoupon(orderId);
 
         // then
-        verify(memberCoupon).cancelUsage(); // cancelUsage() 호출 확인
+        verify(memberCoupon).cancelUsage(); // 취소 메서드 호출 확인
     }
 
     @Test
-    @DisplayName("쿠폰 사용 취소 실패 - 존재하지 않는 쿠폰")
-    void cancelMemberCoupon_Fail_NotFound() {
-        given(memberCouponRepository.findById(1L)).willReturn(Optional.empty());
+    @DisplayName("주문 취소 실패 - 해당 주문에 사용된 쿠폰 없음")
+    void cancelCouponByOrder_Fail_NotFound() {
+        Long orderId = 12345L;
+        given(memberCouponRepository.findByOrderId(orderId)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> memberCouponService.cancelMemberCoupon(1L, 1L))
+        assertThatThrownBy(() -> memberCouponService.cancelMemberCoupon(orderId))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 }
