@@ -56,7 +56,7 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
             "   OR " +
             "   (p.couponPolicyType = 'CATEGORY' AND cat.categoryId IN :categoryIds) " +
             "   OR " +
-            "   (p.couponPolicyType = 'WELCOME' OR p.couponPolicyType = 'GENERAL') " + // 전체 대상
+            "   (p.couponPolicyType = 'CUSTOM') " + // 전체 대상
             ")")
     List<Coupon> findAppliableCoupons(@Param("bookId") Long bookId,
                                       @Param("categoryIds") List<Long> categoryIds);
