@@ -29,7 +29,7 @@ public class BirthdayDlqScheduler {
             log.info("원본 큐로 복구 userId: {}", userId);
 
             rabbitTemplate.convertAndSend(
-                    RabbitConfig.EXCHANGE,
+                    RabbitConfig.USER_EXCHANGE,
                     RabbitConfig.ROUTING_KEY_BIRTHDAY,
                     userId
             );

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    public static final String EXCHANGE = "book2.dev.user.exchange";
+    public static final String USER_EXCHANGE = "book2.dev.user.exchange";
     public static final String QUEUE_WELCOME = "book2.dev.welcome.queue";
     public static final String ROUTING_KEY_WELCOME = "coupon.welcome";
     public static final String DLX_ROUTING_KEY_WELCOME = "coupon.welcome.dlq";
@@ -27,7 +27,7 @@ public class RabbitConfig {
     //공통 exchange
     @Bean
     public DirectExchange exchange() {
-        return new DirectExchange(EXCHANGE);
+        return new DirectExchange(USER_EXCHANGE);
     }
 
     @Bean
