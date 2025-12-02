@@ -9,6 +9,7 @@ import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class MemberCouponServiceImpl implements MemberCouponService {
 
     private final MemberCouponRepository memberCouponRepository;
@@ -40,7 +42,7 @@ public class MemberCouponServiceImpl implements MemberCouponService {
 
     @Transactional
     @Override
-    public void useMemberCoupon(Long memberCouponId, Long userId) {
+    public void useMemberCoupon(Long memberCouponId, Long userId, Long orderId) {
 
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
                 .orElseThrow(CouponNotFoundException::new);
@@ -49,15 +51,22 @@ public class MemberCouponServiceImpl implements MemberCouponService {
             throw new CouponIssueException(CouponErrorCode.NOT_COUPON_OWNER);
         }
 
-        memberCoupon.use();
+        memberCoupon.use(orderId);
+        log.info("쿠폰 사용 : orderId: {}, couponId: {}", orderId, memberCoupon.getMemberCouponId());
     }
 
     @Transactional
     @Override
-    public void cancelMemberCoupon(Long memberCouponId, Long userId) {
+    public void cancelMemberCoupon(Long orderId) {
 
-        MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
+        MemberCoupon memberCoupon = memberCouponRepository.findByOrderId(orderId)
                 .orElseThrow(CouponNotFoundException::new);
+
+        if (memberCoupon.getOrderId() != null && !memberCoupon.getOrderId().equals(orderId)) {
+            throw new CouponIssueException(CouponErrorCode.INVALID_COUPON_ORDER_MATCH);
+        }
+
         memberCoupon.cancelUsage();
+        log.info("주문 취소로 인한 쿠폰 복구 완료: orderId={}, couponId={}", orderId, memberCoupon.getMemberCouponId());
     }
 }

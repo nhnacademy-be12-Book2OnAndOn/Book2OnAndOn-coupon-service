@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.repository;
 
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,6 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
             @Param("status") MemberCouponStatus status,
             Pageable pageable
     );
+
+    Optional<MemberCoupon> findByOrderId(Long orderId);
 }

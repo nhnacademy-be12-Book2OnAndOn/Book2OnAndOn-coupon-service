@@ -10,6 +10,7 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ class MemberCouponRepositoryTest {
         return entityManager.persist(c);
     }
 
-    private MemberCoupon createMemberCoupon(Long userId, Coupon coupon, MemberCouponStatus status) {
+    private MemberCoupon createMemberCoupon(Long userId, Coupon coupon, MemberCouponStatus status, Long orderId) {
         MemberCoupon mc = MemberCoupon.builder()
                 .userId(userId)
                 .coupon(coupon)
@@ -52,7 +53,7 @@ class MemberCouponRepositoryTest {
                 .build();
 
         if (status == MemberCouponStatus.USED) {
-            mc.use();
+            mc.use(orderId); // 주문 번호와 함께 사용
         } else if (status == MemberCouponStatus.EXPIRED) {
             mc.expired();
         }
@@ -60,10 +61,10 @@ class MemberCouponRepositoryTest {
         return entityManager.persist(mc);
     }
 
+    // 기존 테스트 1
     @Test
     @DisplayName("내 쿠폰 조회 - 상태 필터링 및 Fetch Join 확인")
     void findCouponsWithPolicy_StatusTest() {
-        // given
         Long userId = 1L;
 
         CouponPolicy p1 = createPolicy("Policy A");
@@ -74,74 +75,84 @@ class MemberCouponRepositoryTest {
         Coupon c2 = createCoupon(p2);
         Coupon c3 = createCoupon(p3);
 
-        createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED); // 조회 대상
-        createMemberCoupon(userId, c2, MemberCouponStatus.USED);     // 필터링 대상
-        createMemberCoupon(2L, c3, MemberCouponStatus.NOT_USED);     // 다른 유저
+        createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
+        createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L); // 사용된 쿠폰
+        createMemberCoupon(2L, c3, MemberCouponStatus.NOT_USED, null);
 
         entityManager.flush();
         entityManager.clear();
 
-        // when (userId=1, status=NOT_USED)
         Page<MemberCoupon> result = memberCouponRepository.findCouponsWithPolicy(
-                userId,
-                MemberCouponStatus.NOT_USED,
-                PageRequest.of(0, 10)
-        );
+                userId, MemberCouponStatus.NOT_USED, PageRequest.of(0, 10));
 
-        // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getCoupon().getCouponPolicy().getCouponPolicyName()).isEqualTo(
                 "Policy A");
     }
 
+    // 기존 테스트 2
     @Test
-    @DisplayName("내 쿠폰 조회 - 전체 조회 (status = null)")
+    @DisplayName("내 쿠폰 조회 - 전체 조회")
     void findCouponsWithPolicy_AllTest() {
-        // given
         Long userId = 1L;
-
         CouponPolicy p1 = createPolicy("Policy A");
         CouponPolicy p2 = createPolicy("Policy B");
-
-        // 서로 다른 정책으로 쿠폰 생성
         Coupon c1 = createCoupon(p1);
         Coupon c2 = createCoupon(p2);
 
-        // 사용자에게 쿠폰 지급
-        createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED);
-        createMemberCoupon(userId, c2, MemberCouponStatus.USED);
+        createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
+        createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Page<MemberCoupon> result = memberCouponRepository.findCouponsWithPolicy(
+                userId, null, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(2);
+    }
+
+    // 기존 테스트 3
+    @Test
+    @DisplayName("쿠폰 중복 발급 여부 확인")
+    void existsByUserIdAndCoupon_CouponId_Test() {
+        Long userId = 1L;
+        CouponPolicy p = createPolicy("P");
+        Coupon c = createCoupon(p);
+
+        createMemberCoupon(userId, c, MemberCouponStatus.NOT_USED, null);
+
+        boolean exists = memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, c.getCouponId());
+        boolean notExists = memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, 999L);
+
+        assertThat(exists).isTrue();
+        assertThat(notExists).isFalse();
+    }
+
+    // [추가] 주문 ID로 쿠폰 찾기 테스트
+    @Test
+    @DisplayName("주문 ID로 사용된 쿠폰 찾기")
+    void findByOrderId_Test() {
+        // given
+        Long userId = 1L;
+        Long orderId = 12345L;
+        CouponPolicy p = createPolicy("Policy");
+        Coupon c = createCoupon(p);
+
+        createMemberCoupon(userId, c, MemberCouponStatus.USED, orderId); // orderId=12345로 사용됨
 
         entityManager.flush();
         entityManager.clear();
 
         // when
-        Page<MemberCoupon> result = memberCouponRepository.findCouponsWithPolicy(
-                userId,
-                null,
-                PageRequest.of(0, 10)
-        );
+        Optional<MemberCoupon> result = memberCouponRepository.findByOrderId(orderId);
+        Optional<MemberCoupon> notFound = memberCouponRepository.findByOrderId(99999L);
 
         // then
-        assertThat(result.getContent()).hasSize(2);
-    }
+        assertThat(result).isPresent();
+        assertThat(result.get().getMemberCouponId()).isNotNull();
+        assertThat(result.get().getCoupon().getCouponPolicy().getCouponPolicyName()).isEqualTo("Policy");
 
-    @Test
-    @DisplayName("쿠폰 중복 발급 여부 확인")
-    void existsByUserIdAndCoupon_CouponId_Test() {
-        // given
-        Long userId = 1L;
-        CouponPolicy p = createPolicy("P");
-        Coupon c = createCoupon(p); // ID 자동 생성
-        Long couponId = c.getCouponId();
-
-        createMemberCoupon(userId, c, MemberCouponStatus.NOT_USED);
-
-        // when
-        boolean exists = memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId);
-        boolean notExists = memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, 999L);
-
-        // then
-        assertThat(exists).isTrue();
-        assertThat(notExists).isFalse();
+        assertThat(notFound).isEmpty();
     }
 }

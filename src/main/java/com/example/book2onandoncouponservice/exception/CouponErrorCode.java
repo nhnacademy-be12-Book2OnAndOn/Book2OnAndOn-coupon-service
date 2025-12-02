@@ -21,6 +21,7 @@ public enum CouponErrorCode {
     COUPON_NOT_USED(HttpStatus.BAD_REQUEST, "사용 내역이 없는 쿠폰입니다."),
     POLICY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 가능한 상태의 정책이 아닙니다."),
     NOT_COUPON_OWNER(HttpStatus.FORBIDDEN, "해당 쿠폰의 소유자가 아닙니다."),
+    INVALID_COUPON_ORDER_MATCH(HttpStatus.BAD_REQUEST, "해당 주문에 사용한 쿠폰이 아닙니다."),
 
     // 500 Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

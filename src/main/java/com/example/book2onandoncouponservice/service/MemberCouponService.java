@@ -7,13 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface MemberCouponService {
-    
+
     @Transactional(readOnly = true)
     Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable, String status);
 
     //쿠폰 사용
-    void useMemberCoupon(Long memberCouponId, Long userId);
+    void useMemberCoupon(Long memberCouponId, Long userId, Long orderId);
 
     //쿠폰 사용 취소
-    void cancelMemberCoupon(Long memberCouponId, Long userId);
+    void cancelMemberCoupon(Long orderId);
 }
