@@ -17,6 +17,8 @@ import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.CouponService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -158,6 +160,27 @@ public class CouponServiceImpl implements CouponService {
 
         issueMemberCoupon(userId, birthdayCoupon.getCouponId());
     }
+
+    //적용가능한 쿠폰 확인
+    @Transactional(readOnly = true)
+    @Override
+    public List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds) {
+
+        List<Coupon> coupons = couponRepository.findAppliableCoupons(bookId, categoryIds);
+
+        return coupons.stream()
+                .filter(coupon -> {
+                    CouponPolicy couponPolicy = coupon.getCouponPolicy();
+
+                    boolean isStockAvailable =
+                            coupon.getCouponRemainingQuantity() == null || coupon.getCouponRemainingQuantity() > 0;
+                    boolean policyIssuable = couponPolicy.isIssuable();
+
+                    return isStockAvailable && policyIssuable;
+                }).map(CouponResponseDto::new)
+                .collect(Collectors.toList());
+    }
+
 
     //만료일 계산
     private LocalDateTime calculateExpirationDate(CouponPolicy policy, LocalDateTime now) {

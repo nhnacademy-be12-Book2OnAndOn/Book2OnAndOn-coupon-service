@@ -32,7 +32,7 @@ public class MemberCouponController {
             @RequestHeader("X-USER-ID") Long userId,
             Pageable pageable,
             @RequestParam(required = false) String status) {
-        
+
         Page<MemberCouponResponseDto> coupons = memberCouponService.getMyCoupon(userId, pageable, status);
 
         return ResponseEntity.ok(coupons);

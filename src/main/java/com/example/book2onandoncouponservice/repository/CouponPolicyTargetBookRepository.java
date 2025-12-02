@@ -11,7 +11,5 @@ public interface CouponPolicyTargetBookRepository extends JpaRepository<CouponPo
 
     // 특정 정책의 대상 도서 일괄 삭제
     void deleteByCouponPolicy_CouponPolicyId(Long policyId);
-    
-    //특정 정책이 특정 도서에 적용되는지 확인
-    boolean existsByCouponPolicy_CouponPolicyIdAndBookId(Long policyId, Long bookId);
+
 }

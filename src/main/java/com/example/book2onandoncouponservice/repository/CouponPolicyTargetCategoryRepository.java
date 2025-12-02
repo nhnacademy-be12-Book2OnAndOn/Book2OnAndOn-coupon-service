@@ -11,7 +11,5 @@ public interface CouponPolicyTargetCategoryRepository extends JpaRepository<Coup
 
     //특정 정책의 대상 카테고리 일괄 삭제
     void deleteByCouponPolicy_CouponPolicyId(Long policyId);
-    
-    // 특정 정책이 특정 카테고리에 적용되는지 확인
-    boolean existsByCouponPolicy_CouponPolicyIdAndCategoryId(Long policyId, Long categoryId);
+
 }

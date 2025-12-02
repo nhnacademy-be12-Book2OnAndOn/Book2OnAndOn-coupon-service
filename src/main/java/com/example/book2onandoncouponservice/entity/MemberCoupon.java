@@ -17,6 +17,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -64,7 +65,7 @@ public class MemberCoupon {
     @Column(name = "member_coupon_used_date")
     private LocalDateTime memberCouponUsedDate;
 
-
+    @Builder
     public MemberCoupon(Long userId, Coupon coupon, LocalDateTime issuedDate, LocalDateTime endDate) {
         this.userId = userId;
         this.coupon = coupon;

@@ -6,6 +6,7 @@ import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.service.CouponService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -72,6 +73,14 @@ public class CouponController {
         CouponResponseDto coupon = couponService.getCouponDetail(couponId);
 
         return ResponseEntity.ok(coupon);
+    }
+
+    @GetMapping("/appliable")
+    public ResponseEntity<List<CouponResponseDto>> getAppliableCoupons(
+            @RequestParam Long bookId,
+            @RequestParam List<Long> categoryIds) {
+
+        return ResponseEntity.ok(couponService.getAppliableCoupons(bookId, categoryIds));
     }
 
     @PostMapping("/coupons/{couponId}")

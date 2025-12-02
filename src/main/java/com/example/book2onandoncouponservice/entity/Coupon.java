@@ -34,7 +34,7 @@ public class Coupon {
     private Integer couponRemainingQuantity;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "coupon_policy_id", nullable = false)
+    @JoinColumn(name = "coupon_policy_id", nullable = false, unique = true)
     private CouponPolicy couponPolicy;
 
     // 생성자

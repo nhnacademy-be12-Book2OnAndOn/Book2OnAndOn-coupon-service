@@ -24,9 +24,5 @@ public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, Long
             Pageable pageable
     );
 
-    //정책 중복 방지
-    boolean existsByCouponPolicyName(String couponPolicyName);
-
     Optional<CouponPolicy> findByCouponPolicyType(CouponPolicyType couponPolicyType);
-
 }
