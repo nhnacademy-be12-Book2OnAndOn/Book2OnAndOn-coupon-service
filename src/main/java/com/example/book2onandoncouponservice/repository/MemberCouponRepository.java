@@ -2,10 +2,12 @@ package com.example.book2onandoncouponservice.repository;
 
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +37,13 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     );
 
     Optional<MemberCoupon> findByOrderId(Long orderId);
+
+    //BulkUpdate
+    //만료된 쿠폰 전체 만료처리
+    @Modifying(clearAutomatically = true) //영속성 컨테스트 초기화 필수
+    @Query("UPDATE MemberCoupon mc " +
+            "SET mc.memberCouponStatus = 'EXPIRED' " +
+            "WHERE mc.memberCouponEndDate < :now " +
+            "AND mc.memberCouponStatus = 'NOT_USED'")
+    int bulkExpireCoupons(@Param("now") LocalDateTime now);
 }
