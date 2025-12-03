@@ -1,7 +1,6 @@
 package com.example.book2onandoncouponservice.scheduler;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,52 +36,57 @@ class SchedulerTest {
     @Test
     @DisplayName("Welcome DLQ 스케줄러 - 메시지 복구 성공")
     void welcomeDlq_Success() {
-        // given: 메시지가 하나 있고, 그 다음은 null(종료)
+        // given
         given(rabbitTemplate.receiveAndConvert(RabbitConfig.QUEUE_WELCOME_DLQ))
-                .willReturn(100L) // 첫 번째: userId
-                .willReturn(null); // 두 번째: 종료
+                .willReturn(100L)
+                .willReturn(null);
 
         // when
         welcomeDlqScheduler.welcomeDlq();
 
         // then
-        // 원본 큐로 전송되었는지 확인
         verify(rabbitTemplate, times(1)).convertAndSend(
-                eq(RabbitConfig.USER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_WELCOME),
-                eq(100L)
+                RabbitConfig.USER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_WELCOME,
+                100L
         );
     }
 
     @Test
     @DisplayName("Birthday DLQ 스케줄러 - 메시지 복구 성공")
     void birthdayDlq_Success() {
+        // given
         given(rabbitTemplate.receiveAndConvert(RabbitConfig.QUEUE_BIRTHDAY_DLQ))
                 .willReturn(200L)
                 .willReturn(null);
 
+        // when
         birthdayDlqScheduler.birthdayDlq();
 
+        // then
         verify(rabbitTemplate, times(1)).convertAndSend(
-                eq(RabbitConfig.USER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_BIRTHDAY),
-                eq(200L)
+                RabbitConfig.USER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_BIRTHDAY,
+                200L
         );
     }
 
     @Test
     @DisplayName("Cancel DLQ 스케줄러 - 메시지 복구 성공")
     void cancelDlq_Success() {
+        // given
         given(rabbitTemplate.receiveAndConvert(RabbitConfig.QUEUE_CANCEL_DLQ))
-                .willReturn(12345L) // orderId
+                .willReturn(12345L)
                 .willReturn(null);
 
+        // when
         cancelDlqScheduler.cancelCouponDlq();
 
+        // then
         verify(rabbitTemplate, times(1)).convertAndSend(
-                eq(RabbitConfig.ORDER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_CANCEL),
-                eq(12345L)
+                RabbitConfig.ORDER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_CANCEL,
+                12345L
         );
     }
 
