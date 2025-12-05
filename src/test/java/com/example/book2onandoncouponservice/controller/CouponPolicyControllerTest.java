@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
@@ -131,7 +132,7 @@ class CouponPolicyControllerTest {
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk());
 
-        verify(couponPolicyService).updatePolicy(eq(policyId), any(CouponPolicyRequestDto.class));
+        verify(couponPolicyService).updatePolicy(eq(policyId), any(CouponPolicyUpdateRequestDto.class));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.example.book2onandoncouponservice.entity;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -81,7 +82,7 @@ public class CouponPolicy {
         this.couponPolicyStatus = CouponPolicyStatus.ACTIVE;
     }
 
-    public void updatePolicy(CouponPolicyRequestDto requestDto) {
+    public void updatePolicy(CouponPolicyUpdateRequestDto requestDto) {
 
         if (requestDto.getCouponPolicyName() != null) {
             this.couponPolicyName = requestDto.getCouponPolicyName();
@@ -102,20 +103,28 @@ public class CouponPolicy {
         if (requestDto.getMinPrice() != null) {
             this.minPrice = requestDto.getMinPrice();
         }
-
-        if (requestDto.getMaxPrice() != null) {
+        //수정
+        if (requestDto.getRemoveMaxPrice() == true) {
+            this.maxPrice = null;
+        } else if (requestDto.getMaxPrice() != null) {
             this.maxPrice = requestDto.getMaxPrice();
         }
-
-        if (requestDto.getDurationDays() != null) {
+        //수정
+        if (requestDto.getRemoveDurationDays() == true) {
+            this.durationDays = null;
+        } else if (requestDto.getDurationDays() != null) {
             this.durationDays = requestDto.getDurationDays();
         }
-
-        if (requestDto.getFixedStartDate() != null) {
+        //수정
+        if (requestDto.getRemoveFixedDate() == true) {
+            this.fixedStartDate = null;
+        } else if (requestDto.getFixedStartDate() != null) {
             this.fixedStartDate = requestDto.getFixedStartDate();
         }
-
-        if (requestDto.getFixedEndDate() != null) {
+        //수정
+        if (requestDto.getRemoveFixedDate() == true) {
+            this.fixedEndDate = null;
+        } else if (requestDto.getFixedEndDate() != null) {
             this.fixedEndDate = requestDto.getFixedEndDate();
         }
     }
