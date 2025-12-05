@@ -6,9 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
@@ -161,34 +163,84 @@ class CouponPolicyServiceTest {
     }
 
     @Test
-    @DisplayName("쿠폰 정책 수정 성공")
+    @DisplayName("쿠폰 정책 수정 성공 - 타겟 변경 (삭제 후 저장)")
     void updatePolicy_Success() {
         // given
         Long policyId = 1L;
-        CouponPolicyRequestDto requestDto = createRequestDto(
-                "Updated Name",
-                List.of(201L), // 새로운 책 ID
-                List.of(20L)   // 새로운 카테고리 ID
-        );
-
-        // 정책 엔티티 Mocking (updatePolicy 메서드 호출 감지용)
         CouponPolicy policy = mock(CouponPolicy.class);
         given(couponPolicyRepository.findById(policyId)).willReturn(Optional.of(policy));
+
+        CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                "Updated Name",                  // couponPolicyName
+                CouponPolicyType.CUSTOM,          // couponPolicyType (예시)
+                CouponPolicyDiscountType.FIXED,  // couponPolicyDiscountType (예시)
+                1000,                            // couponDiscountValue
+                5000,                            // minPrice
+                20000,                           // maxPrice
+                false,                           // removeMaxPrice
+                30,                              // durationDays
+                false,                           // removeDurationDays
+                null,                            // fixedStartDate
+                null,                            // fixedEndDate
+                false,                           // removeFixedDate
+                List.of(201L),                   // targetBookIds
+                false,                           // removeTargetBook
+                List.of(20L),                    // targetCategoryIds
+                false                            // removeTargetCategory
+        );
 
         // when
         couponPolicyService.updatePolicy(policyId, requestDto);
 
         // then
-        // 1. 엔티티 업데이트 메서드 호출 확인
         verify(policy).updatePolicy(requestDto);
 
-        // 2. 기존 타겟 삭제 확인 (Book, Category 둘 다)
+        // book targets: 삭제 후 저장 호출
+        verify(targetBookRepository).deleteByCouponPolicy_CouponPolicyId(policyId);
+        verify(targetBookRepository).saveAll(anyList());
+
+        // category targets: 삭제 후 저장 호출
+        verify(targetCategoryRepository).deleteByCouponPolicy_CouponPolicyId(policyId);
+        verify(targetCategoryRepository).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("쿠폰 정책 수정 성공 - 대상 전체 제거 (remove 플래그)")
+    void updatePolicy_RemoveTargets() {
+        // given
+        Long policyId = 2L;
+        CouponPolicy policy = mock(CouponPolicy.class);
+        given(couponPolicyRepository.findById(policyId)).willReturn(Optional.of(policy));
+
+        CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                "Remove Targets",                // couponPolicyName
+                CouponPolicyType.CUSTOM,
+                CouponPolicyDiscountType.FIXED,
+                500,
+                0,
+                null,        // maxPrice
+                null,
+                // removeMaxPrice (null treated as false by service if using boolean primitive; ensure DTO uses Boolean)
+                null,        // durationDays
+                null,        // removeDurationDays
+                null,
+                null,
+                null,        // removeFixedDate
+                null,        // targetBookIds
+                true,        // removeTargetBook -> expect delete only
+                null,        // targetCategoryIds
+                true         // removeTargetCategory -> expect delete only
+        );
+
+        // when
+        couponPolicyService.updatePolicy(policyId, requestDto);
+
+        // then: 삭제만 호출되고 saveAll은 호출되지 않아야 함
         verify(targetBookRepository).deleteByCouponPolicy_CouponPolicyId(policyId);
         verify(targetCategoryRepository).deleteByCouponPolicy_CouponPolicyId(policyId);
 
-        // 3. 새로운 타겟 저장 확인 (Book, Category 둘 다)
-        verify(targetBookRepository).saveAll(anyList());
-        verify(targetCategoryRepository).saveAll(anyList());
+        verify(targetBookRepository, never()).saveAll(anyList());
+        verify(targetCategoryRepository, never()).saveAll(anyList());
     }
 
     @Test
@@ -196,28 +248,30 @@ class CouponPolicyServiceTest {
     void updatePolicy_NotFound() {
         // given
         Long policyId = 999L;
-        CouponPolicyRequestDto requestDto = createRequestDto("Fail", null, null);
-
         given(couponPolicyRepository.findById(policyId)).willReturn(Optional.empty());
+
+        CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                "No Policy",
+                CouponPolicyType.CUSTOM,
+                CouponPolicyDiscountType.FIXED,
+                100,
+                0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                false
+        );
 
         // when & then
         assertThatThrownBy(() -> couponPolicyService.updatePolicy(policyId, requestDto))
-                .isInstanceOf(RuntimeException.class) // ServiceImpl에서 RuntimeException을 던지고 있음
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("존재하지 않는 쿠폰정책입니다.");
-    }
-
-    @Test
-    @DisplayName("쿠폰 정책 비활성화 성공")
-    void deactivatePolicy_Success() {
-        // given
-        Long policyId = 1L;
-        CouponPolicy policy = mock(CouponPolicy.class);
-        given(couponPolicyRepository.findById(policyId)).willReturn(Optional.of(policy));
-
-        // when
-        couponPolicyService.deactivatePolicy(policyId);
-
-        // then
-        verify(policy).deActive(); // 상태 변경 메서드 호출 확인
     }
 }

@@ -1,6 +1,7 @@
 package com.example.book2onandoncouponservice.service.impl;
 
 import com.example.book2onandoncouponservice.dto.request.CouponPolicyRequestDto;
+import com.example.book2onandoncouponservice.dto.request.CouponPolicyUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponPolicyResponseDto;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
@@ -83,17 +84,28 @@ public class CouponPolicyServiceImpl implements CouponPolicyService {
     //쿠폰정책 업데이트
     @Transactional
     @Override
-    public void updatePolicy(Long couponPolicyId, CouponPolicyRequestDto requestDto) {
+    public void updatePolicy(Long couponPolicyId, CouponPolicyUpdateRequestDto requestDto) {
         CouponPolicy couponPolicy = couponPolicyRepository.findById(couponPolicyId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 쿠폰정책입니다."));
 
         couponPolicy.updatePolicy(requestDto);
 
-        targetBookRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
-        targetCategoryRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
+        boolean removeTargetBook = requestDto.getRemoveTargetBook();
+        boolean removeTargetCategory = requestDto.getRemoveTargetCategory();
 
-        saveTargetBooks(couponPolicy, requestDto.getTargetBookIds());
-        saveTargetCategories(couponPolicy, requestDto.getTargetCategoryIds());
+        if (removeTargetBook) {
+            targetBookRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
+        } else if (requestDto.getTargetBookIds() != null) {  // 값이 있을 때만 저장
+            targetBookRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
+            saveTargetBooks(couponPolicy, requestDto.getTargetBookIds());
+        }
+        
+        if (removeTargetCategory) {
+            targetCategoryRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
+        } else if (requestDto.getTargetCategoryIds() != null) {
+            targetCategoryRepository.deleteByCouponPolicy_CouponPolicyId(couponPolicyId);
+            saveTargetCategories(couponPolicy, requestDto.getTargetCategoryIds());
+        }
     }
 
     //쿠폰정책 비활성화
