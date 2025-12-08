@@ -45,6 +45,11 @@ public class Coupon {
 
     //쿠폰 수량 업데이트용
     public void update(Integer remainingQuantity) {
+        if (remainingQuantity == null) {
+            this.couponRemainingQuantity = null;
+            return;
+        }
+
         if (remainingQuantity < 0) {
             throw new IllegalStateException("쿠폰 수량은 음수일 수 없습니다.");
         }
