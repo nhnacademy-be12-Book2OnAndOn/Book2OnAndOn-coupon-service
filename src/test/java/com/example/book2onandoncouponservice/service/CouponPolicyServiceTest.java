@@ -171,6 +171,7 @@ class CouponPolicyServiceTest {
         given(couponPolicyRepository.findById(policyId)).willReturn(Optional.of(policy));
 
         CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                policyId,
                 "Updated Name",                  // couponPolicyName
                 CouponPolicyType.CUSTOM,          // couponPolicyType (예시)
                 CouponPolicyDiscountType.FIXED,  // couponPolicyDiscountType (예시)
@@ -213,6 +214,7 @@ class CouponPolicyServiceTest {
         given(couponPolicyRepository.findById(policyId)).willReturn(Optional.of(policy));
 
         CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                policyId,
                 "Remove Targets",                // couponPolicyName
                 CouponPolicyType.CUSTOM,
                 CouponPolicyDiscountType.FIXED,
@@ -251,6 +253,7 @@ class CouponPolicyServiceTest {
         given(couponPolicyRepository.findById(policyId)).willReturn(Optional.empty());
 
         CouponPolicyUpdateRequestDto requestDto = new CouponPolicyUpdateRequestDto(
+                policyId,
                 "No Policy",
                 CouponPolicyType.CUSTOM,
                 CouponPolicyDiscountType.FIXED,

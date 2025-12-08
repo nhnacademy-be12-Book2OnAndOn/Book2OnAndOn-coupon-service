@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CouponPolicyUpdateRequestDto {
 
+    private Long couponPolicyId;
+
     @NotNull(message = "쿠폰 정책 이름은 필수입니다.")
     @Size(max = 50, message = "쿠폰 정책 이름은 50자 이내여야 합니다.")
     private String couponPolicyName;
