@@ -121,6 +121,11 @@ public class CouponPolicy {
         } else if (requestDto.getFixedStartDate() != null) {
             this.fixedStartDate = requestDto.getFixedStartDate();
         }
+        if (requestDto.getRemoveDurationDays() == true && requestDto.getRemoveFixedDate() == true) {
+            this.durationDays = requestDto.getDurationDays();
+            this.fixedEndDate = null;
+            this.fixedStartDate = null;
+        }
         //수정
         if (requestDto.getRemoveFixedDate() == true) {
             this.fixedEndDate = null;
