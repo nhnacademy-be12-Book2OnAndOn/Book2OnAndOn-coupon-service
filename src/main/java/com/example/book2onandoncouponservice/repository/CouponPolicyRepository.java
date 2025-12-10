@@ -24,5 +24,8 @@ public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, Long
             Pageable pageable
     );
 
-    Optional<CouponPolicy> findByCouponPolicyType(CouponPolicyType couponPolicyType);
+    @Query("SELECT cp FROM CouponPolicy cp " +
+            "WHERE cp.couponPolicyType = :type " +
+            "AND cp.couponPolicyStatus = 'ACTIVE'")
+    Optional<CouponPolicy> findActivePolicyByType(@Param("type") CouponPolicyType type);
 }

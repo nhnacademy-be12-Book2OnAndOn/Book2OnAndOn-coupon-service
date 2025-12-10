@@ -298,7 +298,7 @@ class CouponServiceTest {
         Coupon coupon = mock(Coupon.class);
 
         given(policy.getCouponPolicyId()).willReturn(1L);
-        given(policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)).willReturn(Optional.of(policy));
+        given(policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)).willReturn(Optional.of(policy));
         given(couponRepository.findByCouponPolicy_CouponPolicyId(1L)).willReturn(Optional.of(coupon));
 
         // issueMemberCoupon 내부 Stubbing
@@ -318,7 +318,7 @@ class CouponServiceTest {
     @Test
     @DisplayName("웰컴 쿠폰 발급 실패 - 정책 없음")
     void issueWelcomeCoupon_Fail_NoPolicy() {
-        given(policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)).willReturn(Optional.empty());
+        given(policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> couponService.issueWelcomeCoupon(1L))
                 .isInstanceOf(CouponPolicyNotFoundException.class);
@@ -330,7 +330,7 @@ class CouponServiceTest {
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.getCouponPolicyId()).willReturn(1L);
 
-        given(policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)).willReturn(Optional.of(policy));
+        given(policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)).willReturn(Optional.of(policy));
         given(couponRepository.findByCouponPolicy_CouponPolicyId(1L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> couponService.issueWelcomeCoupon(1L))
@@ -349,7 +349,7 @@ class CouponServiceTest {
         Coupon coupon = mock(Coupon.class);
 
         given(policy.getCouponPolicyId()).willReturn(2L);
-        given(policyRepository.findByCouponPolicyType(CouponPolicyType.BIRTHDAY)).willReturn(Optional.of(policy));
+        given(policyRepository.findActivePolicyByType(CouponPolicyType.BIRTHDAY)).willReturn(Optional.of(policy));
         given(couponRepository.findByCouponPolicy_CouponPolicyId(2L)).willReturn(Optional.of(coupon));
 
         // issueMemberCoupon 내부 Stubbing

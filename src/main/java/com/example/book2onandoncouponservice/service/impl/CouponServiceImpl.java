@@ -139,7 +139,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     @Override
     public void issueWelcomeCoupon(Long userId) {
-        CouponPolicy welcomePolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.WELCOME)
+        CouponPolicy welcomePolicy = policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)
                 .orElseThrow(CouponPolicyNotFoundException::new);
         Coupon welcomeCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(welcomePolicy.getCouponPolicyId())
                 .orElseThrow(CouponNotFoundException::new);
@@ -152,7 +152,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     @Override
     public void issueBirthdayCoupon(Long userId) {
-        CouponPolicy birthdayPolicy = policyRepository.findByCouponPolicyType(CouponPolicyType.BIRTHDAY)
+        CouponPolicy birthdayPolicy = policyRepository.findActivePolicyByType(CouponPolicyType.BIRTHDAY)
                 .orElseThrow(CouponPolicyNotFoundException::new);
 
         Coupon birthdayCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(birthdayPolicy.getCouponPolicyId())
@@ -161,7 +161,7 @@ public class CouponServiceImpl implements CouponService {
         issueMemberCoupon(userId, birthdayCoupon.getCouponId());
     }
 
-    //적용가능한 쿠폰 확인
+    //적용가능한 쿠폰 확인 (쿠폰 다운로드용)
     @Transactional(readOnly = true)
     @Override
     public List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds) {
