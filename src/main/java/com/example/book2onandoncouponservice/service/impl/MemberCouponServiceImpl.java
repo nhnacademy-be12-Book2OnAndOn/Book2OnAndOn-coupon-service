@@ -1,13 +1,18 @@
 package com.example.book2onandoncouponservice.service.impl;
 
+import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.exception.CouponErrorCode;
 import com.example.book2onandoncouponservice.exception.CouponIssueException;
 import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
+import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberCouponServiceImpl implements MemberCouponService {
 
     private final MemberCouponRepository memberCouponRepository;
+    private final CouponPolicyRepository couponPolicyRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -68,5 +74,32 @@ public class MemberCouponServiceImpl implements MemberCouponService {
 
         memberCoupon.cancelUsage();
         log.info("주문 취소로 인한 쿠폰 복구 완료: orderId={}, couponId={}", orderId, memberCoupon.getMemberCouponId());
+    }
+
+
+    // 특정 주문에 사용 가능한 쿠폰 조회
+    @Transactional(readOnly = true)
+    @Override
+    public List<MemberCouponResponseDto> getUsableCoupons(Long userId, OrderCouponCheckRequestDto requestDto) {
+
+        List<Long> couponPolicyIds = couponPolicyRepository.findApplicablePolicyIds(
+                requestDto.getBookIds(),
+                requestDto.getCategoryIds());
+
+        if (couponPolicyIds.isEmpty()) {
+            log.info("사용 가능한 쿠폰이 없습니다.");
+            return Collections.emptyList();
+        }
+
+        List<MemberCoupon> usableCoupons = memberCouponRepository.findUsableCouponsByPolicyIds(
+                userId,
+                couponPolicyIds,
+                LocalDateTime.now());
+
+        log.info("해당 주문에 사용 가능한 쿠폰 개수 조회 성공: {}", usableCoupons.size());
+
+        return usableCoupons.stream()
+                .map(MemberCouponResponseDto::new)
+                .toList();
     }
 }

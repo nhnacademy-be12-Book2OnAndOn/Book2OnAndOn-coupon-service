@@ -9,6 +9,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
@@ -18,6 +19,7 @@ import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.exception.CouponErrorCode;
 import com.example.book2onandoncouponservice.exception.CouponIssueException;
 import com.example.book2onandoncouponservice.exception.CouponNotFoundException;
+import com.example.book2onandoncouponservice.repository.CouponPolicyRepository;
 import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.impl.MemberCouponServiceImpl;
 import java.util.List;
@@ -41,6 +43,9 @@ class MemberCouponServiceTest {
 
     @Mock
     private MemberCouponRepository memberCouponRepository;
+
+    @Mock
+    private CouponPolicyRepository couponPolicyRepository;
 
     // --- Helper: DTO 변환을 위한 Mock 객체 생성 ---
     private MemberCoupon createStubbedMemberCoupon(Long id, Long userId) {
@@ -186,5 +191,59 @@ class MemberCouponServiceTest {
 
         assertThatThrownBy(() -> memberCouponService.cancelMemberCoupon(orderId))
                 .isInstanceOf(CouponNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("주문 적용 가능 쿠폰 조회 성공")
+    void getUsableCoupons_Success() {
+        // given
+        Long userId = 1L;
+        List<Long> bookIds = List.of(100L, 101L);
+        List<Long> categoryIds = List.of(10L);
+        OrderCouponCheckRequestDto requestDto = new OrderCouponCheckRequestDto(bookIds, categoryIds);
+
+        // 1. 정책 ID 조회 Mocking
+        List<Long> policyIds = List.of(1L, 2L);
+        given(couponPolicyRepository.findApplicablePolicyIds(bookIds, categoryIds))
+                .willReturn(policyIds);
+
+        // 2. 쿠폰 조회 Mocking (DTO 변환을 위해 Stubbed 객체 사용)
+        MemberCoupon mc = createStubbedMemberCoupon(10L, userId);
+        given(memberCouponRepository.findUsableCouponsByPolicyIds(eq(userId), eq(policyIds), any()))
+                .willReturn(List.of(mc));
+
+        // when
+        List<MemberCouponResponseDto> result = memberCouponService.getUsableCoupons(userId, requestDto);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getMemberCouponId()).isEqualTo(10L);
+        assertThat(result.get(0).getCouponName()).isEqualTo("Test Coupon");
+
+        // Verify
+        verify(couponPolicyRepository).findApplicablePolicyIds(bookIds, categoryIds);
+        verify(memberCouponRepository).findUsableCouponsByPolicyIds(eq(userId), eq(policyIds), any());
+    }
+
+    @Test
+    @DisplayName("주문 적용 가능 쿠폰 조회 - 정책 없음 (Early Return)")
+    void getUsableCoupons_NoPolicy() {
+        // given
+        Long userId = 1L;
+        OrderCouponCheckRequestDto requestDto = new OrderCouponCheckRequestDto(List.of(999L), List.of(99L));
+
+        // 정책이 없다고 가정
+        given(couponPolicyRepository.findApplicablePolicyIds(any(), any()))
+                .willReturn(List.of());
+
+        // when
+        List<MemberCouponResponseDto> result = memberCouponService.getUsableCoupons(userId, requestDto);
+
+        // then
+        assertThat(result).isEmpty(); // 빈 리스트 반환
+
+        // Verify: 정책 조회만 호출되고, 쿠폰 조회는 호출되지 않아야 함 (Early Return 확인)
+        verify(couponPolicyRepository).findApplicablePolicyIds(any(), any());
+        verify(memberCouponRepository, org.mockito.Mockito.never()).findUsableCouponsByPolicyIds(any(), any(), any());
     }
 }

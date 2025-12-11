@@ -3,6 +3,7 @@ package com.example.book2onandoncouponservice.repository;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,4 +47,18 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
             "WHERE mc.memberCouponEndDate < :now " +
             "AND mc.memberCouponStatus = 'NOT_USED'")
     int bulkExpireCoupons(@Param("now") LocalDateTime now);
+
+
+    // 쿠폰 정책 id 리스트로 받아서 정책 id에 해당하는 쿠폰 조회
+    @Query("SELECT mc FROM MemberCoupon mc " +
+            "JOIN FETCH mc.coupon c " +
+            "JOIN FETCH c.couponPolicy cp " + // fetch join으로 정책 정보까지 로딩
+            "WHERE mc.userId = :userId " +
+            "AND mc.memberCouponStatus = 'NOT_USED' " +
+            "AND mc.memberCouponEndDate >= :now " +
+            "AND cp.couponPolicyId IN :policyIds")
+    // 정책 ID 목록에 포함되는지 확인
+    List<MemberCoupon> findUsableCouponsByPolicyIds(@Param("userId") Long userId,
+                                                    @Param("policyIds") List<Long> policyIds,
+                                                    @Param("now") LocalDateTime now);
 }

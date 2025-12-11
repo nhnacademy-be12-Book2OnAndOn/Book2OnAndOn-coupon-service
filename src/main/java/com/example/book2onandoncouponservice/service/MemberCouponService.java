@@ -1,7 +1,9 @@
 package com.example.book2onandoncouponservice.service;
 
 
+import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,4 +18,6 @@ public interface MemberCouponService {
 
     //쿠폰 사용 취소
     void cancelMemberCoupon(Long orderId);
+
+    List<MemberCouponResponseDto> getUsableCoupons(Long userId, OrderCouponCheckRequestDto requestDto);
 }
