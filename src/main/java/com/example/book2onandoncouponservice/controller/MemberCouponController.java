@@ -1,8 +1,11 @@
 package com.example.book2onandoncouponservice.controller;
 
+import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
 import com.example.book2onandoncouponservice.dto.request.UseCouponRequestDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,5 +42,17 @@ public class MemberCouponController {
         Page<MemberCouponResponseDto> coupons = memberCouponService.getMyCoupon(userId, pageable, status);
 
         return ResponseEntity.ok(coupons);
+    }
+
+    @PostMapping("/usable")
+    public ResponseEntity<List<MemberCouponResponseDto>> getUsableCoupons(
+            @RequestHeader("X-USER-ID") Long userId,
+            @Valid @RequestBody OrderCouponCheckRequestDto requestDto) {
+
+        List<MemberCouponResponseDto> result = memberCouponService.getUsableCoupons(
+                userId,
+                requestDto);
+
+        return ResponseEntity.ok(result);
     }
 }
