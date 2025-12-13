@@ -10,10 +10,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
+import com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
 import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
+import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
+import com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.exception.CouponErrorCode;
@@ -34,6 +37,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MemberCouponServiceTest {
@@ -245,5 +249,101 @@ class MemberCouponServiceTest {
         // Verify: 정책 조회만 호출되고, 쿠폰 조회는 호출되지 않아야 함 (Early Return 확인)
         verify(couponPolicyRepository).findApplicablePolicyIds(any(), any());
         verify(memberCouponRepository, org.mockito.Mockito.never()).findUsableCouponsByPolicyIds(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("쿠폰 적용 대상 조회 성공 - 타겟 도서와 카테고리가 존재하는 경우")
+    void getCouponTargets_Success() {
+        // given
+        Long memberCouponId = 1L;
+
+        CouponPolicy policy = CouponPolicy.builder()
+                .couponPolicyDiscountType(CouponPolicyDiscountType.PERCENT)
+                .couponDiscountValue(10)
+                .minPrice(10000)
+                .maxPrice(5000)
+                .build();
+
+        CouponPolicyTargetBook targetBook1 = CouponPolicyTargetBook.builder().bookId(101L).couponPolicy(policy).build();
+        CouponPolicyTargetBook targetBook2 = CouponPolicyTargetBook.builder().bookId(102L).couponPolicy(policy).build();
+        CouponPolicyTargetCategory targetCategory = CouponPolicyTargetCategory.builder().categoryId(55L)
+                .couponPolicy(policy).build();
+
+        // Policy 내부에 리스트 주입 (Entity에 Setter가 없다면 ReflectionTestUtils 사용)
+        ReflectionTestUtils.setField(policy, "couponPolicyTargetBooks", List.of(targetBook1, targetBook2));
+        ReflectionTestUtils.setField(policy, "couponPolicyTargetCategories", List.of(targetCategory));
+
+        // 3. Mock MemberCoupon 연결
+        Coupon coupon = Coupon.builder().couponPolicy(policy).build();
+        MemberCoupon memberCoupon = MemberCoupon.builder()
+                .memberCouponId(memberCouponId) // 빌더에 ID 필드가 있다면 사용
+                .coupon(coupon)
+                .build();
+        // ID 필드가 빌더에 없다면 Reflection으로 주입
+        ReflectionTestUtils.setField(memberCoupon, "memberCouponId", memberCouponId);
+
+        // 4. Repository 동작 정의
+        given(memberCouponRepository.findByIdWithTargets(memberCouponId))
+                .willReturn(Optional.of(memberCoupon));
+
+        // when
+        CouponTargetResponseDto result = memberCouponService.getCouponTargets(memberCouponId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getMemberCouponId()).isEqualTo(memberCouponId);
+
+        // 타겟 ID 리스트 검증
+        assertThat(result.getTargetBookIds()).hasSize(2).containsExactlyInAnyOrder(101L, 102L);
+        assertThat(result.getTargetCategoryIds()).hasSize(1).contains(55L);
+
+        // 할인 정보 검증
+        assertThat(result.getDiscountType()).isEqualTo(CouponPolicyDiscountType.PERCENT);
+        assertThat(result.getDiscountValue()).isEqualTo(10);
+        assertThat(result.getMinPrice()).isEqualTo(10000);
+
+        // 로그 확인용: Repository가 호출되었는지 검증
+        verify(memberCouponRepository).findByIdWithTargets(memberCouponId);
+    }
+
+    @Test
+    @DisplayName("쿠폰 적용 대상 조회 성공 - 타겟이 없는 전체 적용 쿠폰")
+    void getCouponTargets_Success_NoTargets() {
+        // given
+        Long memberCouponId = 2L;
+
+        CouponPolicy policy = CouponPolicy.builder()
+                .couponPolicyDiscountType(CouponPolicyDiscountType.FIXED)
+                .couponDiscountValue(2000)
+                .build();
+        // 타겟 리스트는 null 또는 빈 리스트 상태
+
+        Coupon coupon = Coupon.builder().couponPolicy(policy).build();
+        MemberCoupon memberCoupon = MemberCoupon.builder().coupon(coupon).build();
+        ReflectionTestUtils.setField(memberCoupon, "memberCouponId", memberCouponId);
+
+        given(memberCouponRepository.findByIdWithTargets(memberCouponId))
+                .willReturn(Optional.of(memberCoupon));
+
+        // when
+        CouponTargetResponseDto result = memberCouponService.getCouponTargets(memberCouponId);
+
+        // then
+        assertThat(result.getTargetBookIds()).isEmpty();
+        assertThat(result.getTargetCategoryIds()).isEmpty();
+        assertThat(result.getDiscountValue()).isEqualTo(2000);
+    }
+
+    @Test
+    @DisplayName("쿠폰 적용 대상 조회 실패 - 쿠폰 ID가 존재하지 않음")
+    void getCouponTargets_Fail_NotFound() {
+        // given
+        Long invalidId = 999L;
+        given(memberCouponRepository.findByIdWithTargets(invalidId))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> memberCouponService.getCouponTargets(invalidId))
+                .isInstanceOf(CouponNotFoundException.class);
     }
 }

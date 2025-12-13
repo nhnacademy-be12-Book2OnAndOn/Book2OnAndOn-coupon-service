@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -76,9 +77,11 @@ public class CouponPolicy {
     private CouponPolicyStatus couponPolicyStatus;
 
     @OneToMany(mappedBy = "couponPolicy", fetch = FetchType.LAZY)
+    @BatchSize(size = 100)
     private List<CouponPolicyTargetBook> couponPolicyTargetBooks = new ArrayList<>();
 
     @OneToMany(mappedBy = "couponPolicy", fetch = FetchType.LAZY)
+    @BatchSize(size = 100)
     private List<CouponPolicyTargetCategory> couponPolicyTargetCategories = new ArrayList<>();
 
     public CouponPolicy(CouponPolicyRequestDto requestDto) {

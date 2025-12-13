@@ -128,4 +128,40 @@ class MemberCouponControllerTest {
         // Verify: Service가 올바른 파라미터로 호출되었는지 검증
         verify(memberCouponService).getUsableCoupons(eq(userId), any(OrderCouponCheckRequestDto.class));
     }
+
+    @Test
+    @DisplayName("쿠폰 적용 대상(Target) 조회 - 200 OK")
+    void getCouponTargets_Success() throws Exception {
+        // given
+        Long memberCouponId = 1L;
+
+        com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto responseDto =
+                com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto.builder()
+                        .memberCouponId(memberCouponId)
+                        .targetBookIds(List.of(1001L, 1002L))    // 적용 가능한 책 ID
+                        .targetCategoryIds(List.of(10L, 20L))    // 적용 가능한 카테고리 ID
+                        .minPrice(15000)                         // 최소 주문 금액
+                        .maxPrice(5000)                          // 최대 할인 금액
+                        .discountType(CouponPolicyDiscountType.PERCENT) // 할인 타입
+                        .discountValue(10)                       // 10% 할인
+                        .build();
+
+        // given
+        given(memberCouponService.getCouponTargets(eq(memberCouponId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(get("/my-coupon/{memberCouponId}/targets", memberCouponId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.memberCouponId").value(memberCouponId))
+                .andExpect(jsonPath("$.minPrice").value(15000))
+                .andExpect(jsonPath("$.discountType").value("PERCENT"))
+                .andExpect(jsonPath("$.discountValue").value(10))
+                .andExpect(jsonPath("$.targetBookIds[0]").value(1001L))     // 리스트 첫 번째 요소 검증
+                .andExpect(jsonPath("$.targetCategoryIds[0]").value(10L));  // 리스트 첫 번째 요소 검증
+
+        // Verify: 서비스 메서드가 정확한 ID로 호출되었는지 검증
+        verify(memberCouponService).getCouponTargets(eq(memberCouponId));
+    }
 }
