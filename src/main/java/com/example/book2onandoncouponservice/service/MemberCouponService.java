@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.service;
 
 
 import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
+import com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -20,4 +21,7 @@ public interface MemberCouponService {
     void cancelMemberCoupon(Long orderId);
 
     List<MemberCouponResponseDto> getUsableCoupons(Long userId, OrderCouponCheckRequestDto requestDto);
+
+    @Transactional(readOnly = true)
+    CouponTargetResponseDto getCouponTargets(Long memberCouponId);
 }

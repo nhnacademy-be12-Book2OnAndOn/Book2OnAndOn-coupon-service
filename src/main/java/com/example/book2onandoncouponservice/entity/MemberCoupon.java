@@ -106,14 +106,4 @@ public class MemberCoupon {
         this.memberCouponUsedDate = null;
         this.orderId = null;
     }
-
-    public void expired() {
-
-        if (this.memberCouponStatus == MemberCouponStatus.EXPIRED
-                || this.memberCouponStatus == MemberCouponStatus.USED) {
-            return;
-        }
-
-        this.memberCouponStatus = MemberCouponStatus.EXPIRED;
-    }
 }

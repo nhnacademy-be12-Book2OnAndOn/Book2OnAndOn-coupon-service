@@ -38,15 +38,23 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     @Override
     public Long createCouponUnit(CouponCreateRequestDto requestDto) {
+
+        log.info("쿠폰 생성 요청. policyId={}, quantity={}", requestDto.getCouponPolicyId(),
+                requestDto.getCouponRemainingQuantity());
         CouponPolicy policy = policyRepository.findById(requestDto.getCouponPolicyId())
-                .orElseThrow(CouponPolicyNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.error("쿠폰 정책을 찾을 수 없음. policyId={}", requestDto.getCouponPolicyId());
+                    return new CouponPolicyNotFoundException();
+                });
 
         if (policy.getCouponPolicyStatus() == CouponPolicyStatus.DEACTIVE) {
+            log.warn("발급 불가능한 정책으로 쿠폰 생성 시도. policyId={}", policy.getCouponPolicyId());
             throw new CouponIssueException(CouponErrorCode.POLICY_NOT_ISSUABLE);
         }
 
         Coupon coupon = new Coupon(requestDto.getCouponRemainingQuantity(), policy);
         Coupon savedCoupon = couponRepository.save(coupon);
+        log.info("쿠폰 생성 완료. generatedCouponId={}", savedCoupon.getCouponId());
         return savedCoupon.getCouponId();
     }
 
@@ -55,15 +63,19 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Page<CouponResponseDto> getCoupons(Pageable pageable, String status) {
 
+        log.info("전체 쿠폰 목록 조회 요청. page={}, size={}, status={}", pageable.getPageNumber(), pageable.getPageSize(),
+                status);
         CouponPolicyStatus policyStatus = null;
 
         if (status != null && !status.isEmpty() && !status.equals("ALL")) {
             try {
                 policyStatus = CouponPolicyStatus.valueOf(status);
             } catch (IllegalArgumentException e) {
+                log.warn("유효하지 않은 쿠폰 상태 검색어: {}", status);
             }
         }
         Page<Coupon> coupons = couponRepository.findAllByPolicyStatus(policyStatus, pageable);
+        log.info("전체 쿠폰 목록 조회 완료. totalElements={}", coupons.getTotalElements());
 
         return coupons.map(CouponResponseDto::new);
     }
@@ -72,6 +84,7 @@ public class CouponServiceImpl implements CouponService {
     // 쿠폰 상세 조회
     @Override
     public CouponResponseDto getCouponDetail(Long couponId) {
+        log.info("쿠폰 상세 조회 요청. couponId={}", couponId);
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(CouponNotFoundException::new);
         return new CouponResponseDto(coupon);
@@ -80,6 +93,8 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Override
     public Page<CouponResponseDto> getAvailableCoupon(Pageable pageable) {
+
+        log.info("발급 가능(다운로드용) 쿠폰 목록 조회 요청. page={}", pageable.getPageNumber());
         LocalDate today = LocalDate.now();
         Page<Coupon> coupons = couponRepository.findAvailableCoupons(
                 CouponPolicyStatus.ACTIVE,
@@ -99,10 +114,12 @@ public class CouponServiceImpl implements CouponService {
         CouponPolicy policy = coupon.getCouponPolicy();
 
         if (!policy.isIssuable()) {
+            log.warn("발급 기간이 아니거나 비활성화된 정책. policyId={}, userId={}", policy.getCouponPolicyId(), userId);
             throw new CouponIssueException(CouponErrorCode.POLICY_NOT_ISSUABLE);
         }
 
         if (memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)) {
+            log.warn("이미 발급된 쿠폰. userId={}, couponId={}", userId, couponId);
             throw new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED);
         }
 
@@ -119,6 +136,8 @@ public class CouponServiceImpl implements CouponService {
         );
 
         MemberCoupon savedMemberCoupon = memberCouponRepository.save(memberCoupon);
+        log.info("회원 쿠폰 발급 성공. memberCouponId={}, userId={}, expirationDate={}",
+                savedMemberCoupon.getMemberCouponId(), userId, endDate);
 
         return savedMemberCoupon.getMemberCouponId();
     }
@@ -127,10 +146,14 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     @Override
     public Integer updateAccount(Long couponId, Integer quantity) {
+
+        log.info("쿠폰 수량 변경 요청. couponId={}, newQuantity={}", couponId, quantity);
+
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(CouponNotFoundException::new);
 
         coupon.update(quantity);
+        log.info("쿠폰 수량 변경 완료. couponId={}", couponId);
 
         return quantity;
     }
@@ -140,11 +163,24 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public void issueWelcomeCoupon(Long userId) {
         CouponPolicy welcomePolicy = policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)
-                .orElseThrow(CouponPolicyNotFoundException::new);
-        Coupon welcomeCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(welcomePolicy.getCouponPolicyId())
-                .orElseThrow(CouponNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.error("활성화된 웰컴 쿠폰 정책이 없습니다.");
+                    return new CouponPolicyNotFoundException();
+                });
 
-        issueMemberCoupon(userId, welcomeCoupon.getCouponId());
+        Coupon welcomeCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(welcomePolicy.getCouponPolicyId())
+                .orElseThrow(() -> {
+                    log.error("웰컴 쿠폰이 존재하지 않습니다. policyId={}", welcomePolicy.getCouponPolicyId());
+                    return new CouponNotFoundException();
+                });
+
+        try {
+            issueMemberCoupon(userId, welcomeCoupon.getCouponId());
+            log.info("웰컴 쿠폰 지급 성공. userId={}", userId);
+        } catch (Exception e) {
+            log.error("웰컴 쿠폰 지급 중 예외 발생. userId={}, error={}", userId, e.getMessage());
+            throw e;
+        }
 
         log.info("웰컴 쿠폰 지급 성공 userId = {}", userId);
     }
@@ -153,22 +189,35 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public void issueBirthdayCoupon(Long userId) {
         CouponPolicy birthdayPolicy = policyRepository.findActivePolicyByType(CouponPolicyType.BIRTHDAY)
-                .orElseThrow(CouponPolicyNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.warn("활성화된 생일 쿠폰 정책이 없습니다. userId={}", userId);
+                    return new CouponPolicyNotFoundException();
+                });
 
         Coupon birthdayCoupon = couponRepository.findByCouponPolicy_CouponPolicyId(birthdayPolicy.getCouponPolicyId())
-                .orElseThrow(CouponNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.error("생일 쿠폰이 존재하지 않습니다. policyId={}", birthdayPolicy.getCouponPolicyId());
+                    return new CouponNotFoundException();
+                });
 
-        issueMemberCoupon(userId, birthdayCoupon.getCouponId());
+        try {
+            issueMemberCoupon(userId, birthdayCoupon.getCouponId());
+            log.info("생일 쿠폰 지급 성공. userId={}", userId);
+        } catch (Exception e) {
+            log.error("생일 쿠폰 지급 중 예외 발생. userId={}, error={}", userId, e.getMessage());
+            throw e;
+        }
     }
 
     //적용가능한 쿠폰 확인 (쿠폰 다운로드용)
     @Transactional(readOnly = true)
     @Override
     public List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds) {
+        log.debug("상품 적용 가능 쿠폰 조회 요청. bookId={}, categoryIds={}", bookId, categoryIds);
 
         List<Coupon> coupons = couponRepository.findAppliableCoupons(bookId, categoryIds);
 
-        return coupons.stream()
+        List<CouponResponseDto> result = coupons.stream()
                 .filter(coupon -> {
                     CouponPolicy couponPolicy = coupon.getCouponPolicy();
 
@@ -179,6 +228,9 @@ public class CouponServiceImpl implements CouponService {
                     return isStockAvailable && policyIssuable;
                 }).map(CouponResponseDto::new)
                 .collect(Collectors.toList());
+
+        log.info("상품 적용 가능 쿠폰 조회 완료. foundCount={}", result.size());
+        return result;
     }
 
 
@@ -190,6 +242,7 @@ public class CouponServiceImpl implements CouponService {
         if (policy.getDurationDays() != null) {
             return now.plusDays(policy.getDurationDays());
         }
+        log.error("쿠폰 정책에 만료일 기준 누락. policyId={}", policy.getCouponPolicyId());
         throw new IllegalStateException("쿠폰 정책에 만료일 기준이 없습니다. policyId=" + policy.getCouponPolicyId());
     }
 }
