@@ -1,7 +1,11 @@
 package com.example.book2onandoncouponservice.service.impl;
 
 import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
+import com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
+import com.example.book2onandoncouponservice.entity.CouponPolicy;
+import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
+import com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
 import com.example.book2onandoncouponservice.entity.MemberCouponStatus;
 import com.example.book2onandoncouponservice.exception.CouponErrorCode;
@@ -101,5 +105,50 @@ public class MemberCouponServiceImpl implements MemberCouponService {
         return usableCoupons.stream()
                 .map(MemberCouponResponseDto::new)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public CouponTargetResponseDto getCouponTargets(Long memberCouponId) {
+
+        log.info("쿠폰 적용 대상(Target) 조회 요청. memberCouponId={}", memberCouponId);
+
+        MemberCoupon memberCoupon = memberCouponRepository.findByIdWithTargets(memberCouponId)
+                .orElseThrow(() -> {
+                    // [Log] 실패 시 경고
+                    log.warn("쿠폰 조회 실패: 존재하지 않는 쿠폰입니다. memberCouponId={}", memberCouponId);
+                    return new CouponNotFoundException();
+                });
+
+        CouponPolicy policy = memberCoupon.getCoupon().getCouponPolicy();
+
+        // 타겟 도서 ID 추출
+        List<Long> bookIds = (policy.getCouponPolicyTargetBooks() != null)
+                ? policy.getCouponPolicyTargetBooks().stream()
+                .map(CouponPolicyTargetBook::getBookId)
+                .toList()
+                : List.of();
+
+        // 타겟 카테고리 ID 추출
+        List<Long> categoryIds = (policy.getCouponPolicyTargetCategories() != null)
+                ? policy.getCouponPolicyTargetCategories().stream()
+                .map(CouponPolicyTargetCategory::getCategoryId)
+                .toList()
+                : List.of();
+
+        CouponTargetResponseDto response = CouponTargetResponseDto.builder()
+                .memberCouponId(memberCoupon.getMemberCouponId())
+                .targetBookIds(bookIds)
+                .targetCategoryIds(categoryIds)
+                .minPrice(policy.getMinPrice())
+                .maxPrice(policy.getMaxPrice())
+                .discountType(policy.getCouponPolicyDiscountType())
+                .discountValue(policy.getCouponDiscountValue())
+                .build();
+
+        log.info("쿠폰 적용 대상 조회 완료. memberCouponId={}, bookIdsSize={}, categoryIdsSize={}", memberCouponId,
+                bookIds.size(), categoryIds.size());
+
+        return response;
     }
 }

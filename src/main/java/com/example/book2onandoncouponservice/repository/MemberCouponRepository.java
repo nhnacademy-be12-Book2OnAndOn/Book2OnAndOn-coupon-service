@@ -61,4 +61,12 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     List<MemberCoupon> findUsableCouponsByPolicyIds(@Param("userId") Long userId,
                                                     @Param("policyIds") List<Long> policyIds,
                                                     @Param("now") LocalDateTime now);
+
+
+    //order에게 해당 쿠폰의 적용 book, category 반환용
+    @Query("SELECT mc FROM MemberCoupon mc " +
+            "JOIN FETCH mc.coupon c " +
+            "JOIN FETCH c.couponPolicy cp " +
+            "WHERE mc.memberCouponId = :memberCouponId")
+    Optional<MemberCoupon> findByIdWithTargets(@Param("memberCouponId") Long memberCouponId);
 }

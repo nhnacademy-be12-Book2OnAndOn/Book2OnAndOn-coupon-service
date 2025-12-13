@@ -183,30 +183,22 @@ class MemberCouponRepositoryTest {
         Long userId = 1L;
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. 정책 생성 (DB 제약조건 회피를 위해 시나리오별로 별도 정책 생성)
         CouponPolicy p1 = createPolicy("Policy Valid");   // 유효
         CouponPolicy p2 = createPolicy("Policy Used");    // 사용됨
         CouponPolicy p3 = createPolicy("Policy Other");   // 대상 아님
         CouponPolicy p4 = createPolicy("Policy Expired"); // 만료됨
 
-        // 2. 쿠폰 생성 (1 Policy : 1 Coupon)
         Coupon c1 = createCoupon(p1);
         Coupon c2 = createCoupon(p2);
         Coupon c3 = createCoupon(p3);
         Coupon c4 = createCoupon(p4);
 
-        // 3. 멤버 쿠폰 발급 및 상태 설정
-
-        // [검색 대상] Policy Valid, 사용안함, 기간 남음 -> 조회되어야 함
         MemberCoupon validMc = createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
 
-        // [제외] Policy Used, 이미 사용함
         createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L);
 
-        // [제외] Policy Other, 대상 정책 아님 (쿼리 조건에서 빠질 예정)
         createMemberCoupon(userId, c3, MemberCouponStatus.NOT_USED, null);
 
-        // [제외] Policy A, 다른 유저
         createMemberCoupon(2L, c1, MemberCouponStatus.NOT_USED,
                 null); // 주의: c1(p1)은 이미 User1이 가졌으므로 1:N 허용 확인 필요. MemberCoupon 테이블은 (UserId, CouponId)가 유니크하므로 User2는 c1 발급 가능.
 
@@ -224,7 +216,6 @@ class MemberCouponRepositoryTest {
         entityManager.clear();
 
         // when
-        // "주문 상품에 해당하는 정책이 p1, p2, p4 이다" 라고 가정
         List<Long> targetPolicyIds = List.of(
                 p1.getCouponPolicyId(),
                 p2.getCouponPolicyId(),
@@ -238,9 +229,64 @@ class MemberCouponRepositoryTest {
         );
 
         // then
-        // 사용 완료된 것(p2)과 만료된 것(p4)은 제외되고, 유효한 것(p1) 하나만 나와야 함
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getMemberCouponId()).isEqualTo(validMc.getMemberCouponId());
         assertThat(result.get(0).getCoupon().getCouponPolicy().getCouponPolicyName()).isEqualTo("Policy Valid");
+    }
+
+    @Test
+    @DisplayName("쿠폰 조회 시 정책 및 타겟 정보까지 함께 로딩 (Fetch Join)")
+    void findByIdWithTargets_Test() {
+        // given
+        Long userId = 1L;
+
+        // 1. 정책 생성
+        CouponPolicy policy = createPolicy("Target Policy");
+
+        // 2. 타겟 도서 추가 (CouponPolicyTargetBook 엔티티 필요)
+        // [주의] 테스트용으로 직접 insert 하거나, 연관관계 메서드 사용해야 함
+        // 여기서는 개념적으로 EntityManager를 사용해 직접 넣는다고 가정
+        com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook targetBook =
+                com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook.builder()
+                        .couponPolicy(policy)
+                        .bookId(1001L)
+                        .build();
+        entityManager.persist(targetBook);
+
+        // 3. 타겟 카테고리 추가
+        com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory targetCategory =
+                com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory.builder()
+                        .couponPolicy(policy)
+                        .categoryId(50L)
+                        .build();
+        entityManager.persist(targetCategory);
+
+        Coupon coupon = createCoupon(policy);
+        MemberCoupon memberCoupon = createMemberCoupon(userId, coupon, MemberCouponStatus.NOT_USED, null);
+
+        entityManager.flush();
+        entityManager.clear(); // 1차 캐시 비움 (실제 쿼리 발생 유도)
+
+        // when
+        Optional<MemberCoupon> result = memberCouponRepository.findByIdWithTargets(memberCoupon.getMemberCouponId());
+
+        // then
+        assertThat(result).isPresent();
+        MemberCoupon mc = result.get();
+
+        // 1. 기본 정보 확인
+        assertThat(mc.getMemberCouponId()).isEqualTo(memberCoupon.getMemberCouponId());
+
+        // 2. 정책 정보 Lazy Loading 없이 접근 가능한지 확인 (Fetch Join 검증)
+        CouponPolicy loadedPolicy = mc.getCoupon().getCouponPolicy();
+        assertThat(loadedPolicy.getCouponPolicyName()).isEqualTo("Target Policy");
+
+        // 3. 타겟 도서 목록 확인
+        assertThat(loadedPolicy.getCouponPolicyTargetBooks()).isNotEmpty();
+        assertThat(loadedPolicy.getCouponPolicyTargetBooks().get(0).getBookId()).isEqualTo(1001L);
+
+        // 4. 타겟 카테고리 목록 확인
+        assertThat(loadedPolicy.getCouponPolicyTargetCategories()).isNotEmpty();
+        assertThat(loadedPolicy.getCouponPolicyTargetCategories().get(0).getCategoryId()).isEqualTo(50L);
     }
 }

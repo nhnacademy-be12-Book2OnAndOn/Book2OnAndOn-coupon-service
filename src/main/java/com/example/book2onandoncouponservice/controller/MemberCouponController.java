@@ -2,6 +2,7 @@ package com.example.book2onandoncouponservice.controller;
 
 import com.example.book2onandoncouponservice.dto.request.OrderCouponCheckRequestDto;
 import com.example.book2onandoncouponservice.dto.request.UseCouponRequestDto;
+import com.example.book2onandoncouponservice.dto.response.CouponTargetResponseDto;
 import com.example.book2onandoncouponservice.dto.response.MemberCouponResponseDto;
 import com.example.book2onandoncouponservice.service.MemberCouponService;
 import jakarta.validation.Valid;
@@ -54,5 +55,14 @@ public class MemberCouponController {
                 requestDto);
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{memberCouponId}/targets")
+    public ResponseEntity<CouponTargetResponseDto> getCouponTargets(
+            @PathVariable("memberCouponId") Long memberCouponId) {
+
+        CouponTargetResponseDto response = memberCouponService.getCouponTargets(memberCouponId);
+
+        return ResponseEntity.ok(response);
     }
 }
