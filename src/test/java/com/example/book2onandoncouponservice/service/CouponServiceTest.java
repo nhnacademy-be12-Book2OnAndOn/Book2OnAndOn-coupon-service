@@ -104,7 +104,7 @@ class CouponServiceTest {
 
             // 캡처한 Synchronization의 afterCommit 실행 -> Redis 로직 수행됨
             captor.getValue().afterCommit();
-            verify(valueOperations).set(eq("coupon:10stock:"), eq("1000"));
+            verify(valueOperations).set("coupon:10stock:", "1000");
         }
     }
 
@@ -139,7 +139,7 @@ class CouponServiceTest {
 
             captor.getValue().afterCommit();
             // Long.MAX_VALUE로 저장되는지 확인
-            verify(valueOperations).set(eq("coupon:10stock:"), eq(String.valueOf(Long.MAX_VALUE)));
+            verify(valueOperations).set("coupon:10stock:", String.valueOf(Long.MAX_VALUE));
         }
     }
 

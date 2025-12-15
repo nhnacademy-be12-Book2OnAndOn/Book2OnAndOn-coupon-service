@@ -44,7 +44,7 @@ public class WelcomeDlqScheduler {
         log.info("welcome.dlq 처리 스케줄러 시작");
 
         while (true) {
-            Message message = rabbitTemplate.receive(RabbitConfig.QUEUE_BIRTHDAY_DLQ);
+            Message message = rabbitTemplate.receive(RabbitConfig.QUEUE_WELCOME_DLQ);
 
             if (message == null) {
                 log.info("DLQ가 비어있습니다. 스케줄러 종료");
