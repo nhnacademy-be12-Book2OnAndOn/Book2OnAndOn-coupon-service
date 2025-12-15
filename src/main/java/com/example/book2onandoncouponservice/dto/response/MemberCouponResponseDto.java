@@ -28,6 +28,7 @@ public class MemberCouponResponseDto {
     private LocalDateTime memberCouponUseDate;       // MemberCoupon
     private String discountDescription;
 
+
     public MemberCouponResponseDto(MemberCoupon memberCoupon) {
         this.memberCouponId = memberCoupon.getMemberCouponId();
         this.memberCouponStatus = memberCoupon.getMemberCouponStatus();
