@@ -50,9 +50,10 @@ public class MemberCoupon {
 
     // 쿠폰 상태
     @NotNull
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "member_coupon_status", nullable = false)
-    private MemberCouponStatus memberCouponStatus;
+    private MemberCouponStatus memberCouponStatus = MemberCouponStatus.NOT_USED;
 
     //쿠폰 발행일
     @NotNull
@@ -71,8 +72,6 @@ public class MemberCoupon {
     @Column(name = "order_id")
     private Long orderId;
 
-
-    @Builder
     public MemberCoupon(Long userId, Coupon coupon, LocalDateTime issuedDate, LocalDateTime endDate) {
         this.userId = userId;
         this.coupon = coupon;
