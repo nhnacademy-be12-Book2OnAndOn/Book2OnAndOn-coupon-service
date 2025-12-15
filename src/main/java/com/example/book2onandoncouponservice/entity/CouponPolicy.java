@@ -99,53 +99,50 @@ public class CouponPolicy {
 
     public void updatePolicy(CouponPolicyUpdateRequestDto requestDto) {
 
+        // 기본 정보 수정 (Null이 아닐 때만 업데이트)
         if (requestDto.getCouponPolicyName() != null) {
             this.couponPolicyName = requestDto.getCouponPolicyName();
         }
-
         if (requestDto.getCouponPolicyType() != null) {
             this.couponPolicyType = requestDto.getCouponPolicyType();
         }
-
         if (requestDto.getCouponPolicyDiscountType() != null) {
             this.couponPolicyDiscountType = requestDto.getCouponPolicyDiscountType();
         }
-
         if (requestDto.getCouponDiscountValue() != null) {
             this.couponDiscountValue = requestDto.getCouponDiscountValue();
         }
-
         if (requestDto.getMinPrice() != null) {
             this.minPrice = requestDto.getMinPrice();
         }
-        //수정
-        if (requestDto.getRemoveMaxPrice() == true) {
+
+        // 최대 할인 금액 수정 (삭제 우선)
+        if (Boolean.TRUE.equals(requestDto.getRemoveMaxPrice())) {
             this.maxPrice = null;
         } else if (requestDto.getMaxPrice() != null) {
             this.maxPrice = requestDto.getMaxPrice();
         }
-        //수정
-        if (requestDto.getRemoveDurationDays() == true) {
+
+        // 유효 기간 (Duration) 수정
+        // 삭제 요청이 있으면 null 처리, 아니면 값 업데이트
+        if (Boolean.TRUE.equals(requestDto.getRemoveDurationDays())) {
             this.durationDays = null;
         } else if (requestDto.getDurationDays() != null) {
             this.durationDays = requestDto.getDurationDays();
         }
-        //수정
-        if (requestDto.getRemoveFixedDate() == true) {
+
+        // 고정 기간 (Fixed Date) 수정
+        // 시작일과 종료일은 보통 같이 움직이므로 하나의 블록으로 처리하는 것이 안전함
+        if (Boolean.TRUE.equals(requestDto.getRemoveFixedDate())) {
             this.fixedStartDate = null;
-        } else if (requestDto.getFixedStartDate() != null) {
-            this.fixedStartDate = requestDto.getFixedStartDate();
-        }
-        if (requestDto.getRemoveDurationDays() == true && requestDto.getRemoveFixedDate() == true) {
-            this.durationDays = requestDto.getDurationDays();
             this.fixedEndDate = null;
-            this.fixedStartDate = null;
-        }
-        //수정
-        if (requestDto.getRemoveFixedDate() == true) {
-            this.fixedEndDate = null;
-        } else if (requestDto.getFixedEndDate() != null) {
-            this.fixedEndDate = requestDto.getFixedEndDate();
+        } else {
+            if (requestDto.getFixedStartDate() != null) {
+                this.fixedStartDate = requestDto.getFixedStartDate();
+            }
+            if (requestDto.getFixedEndDate() != null) {
+                this.fixedEndDate = requestDto.getFixedEndDate();
+            }
         }
     }
 

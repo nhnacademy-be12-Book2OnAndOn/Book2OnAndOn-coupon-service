@@ -23,6 +23,7 @@ public class BirthdayDlqScheduler {
     private final RabbitTemplate rabbitTemplate;
     private final MessageConverter messageConverter;
     private final DoorayHookClient doorayHookClient;
+    private static final String X_DEATH_HEADER = "x-death";
 
     @Value("${dooray.service.id}")
     private String serviceId;
@@ -78,7 +79,7 @@ public class BirthdayDlqScheduler {
     // x-death 헤더에서 count(횟수) 추출
     private long getRetryCount(Message message) {
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
-        if (headers.containsKey("x-death")) {
+        if (headers.containsKey(X_DEATH_HEADER)) {
             List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get("x-death");
             if (!deaths.isEmpty()) {
                 // RabbitMQ 버전에 따라 Long 또는 Integer일 수 있음
@@ -92,7 +93,7 @@ public class BirthdayDlqScheduler {
     // 에러 원인 추출
     private String getErrorReason(Message message) {
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
-        if (headers.containsKey("x-death")) {
+        if (headers.containsKey(X_DEATH_HEADER)) {
             List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get("x-death");
             if (!deaths.isEmpty()) {
                 return String.valueOf(deaths.get(0).get("reason"));

@@ -165,6 +165,7 @@ public class RabbitConfig {
                 .with(ROUTING_KEY_ISSUE);
     }
 
+    @Bean
     public Queue issueDlq() {
         return new Queue(QUEUE_ISSUE_DLQ, true);
     }
