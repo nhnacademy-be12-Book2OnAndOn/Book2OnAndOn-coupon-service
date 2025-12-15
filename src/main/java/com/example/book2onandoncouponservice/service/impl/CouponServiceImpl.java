@@ -23,8 +23,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class CouponServiceImpl implements CouponService {
     private final CouponPolicyRepository policyRepository;
     private final CouponRepository couponRepository;
     private final MemberCouponRepository memberCouponRepository;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     @Override
@@ -54,6 +58,21 @@ public class CouponServiceImpl implements CouponService {
 
         Coupon coupon = new Coupon(requestDto.getCouponRemainingQuantity(), policy);
         Coupon savedCoupon = couponRepository.save(coupon);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String redisKey = "coupon:" + savedCoupon.getCouponId() + "stock:";
+                String initialQuantity = (savedCoupon.getCouponRemainingQuantity() == null)
+                        ? String.valueOf(Long.MAX_VALUE)
+                        : String.valueOf(savedCoupon.getCouponRemainingQuantity());
+
+                redisTemplate.opsForValue().set(redisKey, initialQuantity);
+
+                log.info("Redis 재고 초기화 완료. key={}, quantity={}", redisKey, initialQuantity);
+            }
+        });
+
         log.info("쿠폰 생성 완료. generatedCouponId={}", savedCoupon.getCouponId());
         return savedCoupon.getCouponId();
     }
@@ -109,7 +128,11 @@ public class CouponServiceImpl implements CouponService {
     public Long issueMemberCoupon(Long userId, Long couponId) {
 
         Coupon coupon = couponRepository.findByIdForUpdate(couponId)
-                .orElseThrow(CouponNotFoundException::new);
+                .orElseThrow(() -> {
+                            log.error("존재하지 않는 쿠폰. couponId={}", couponId);
+                            return new CouponNotFoundException();
+                        }
+                );
 
         CouponPolicy policy = coupon.getCouponPolicy();
 
@@ -153,8 +176,23 @@ public class CouponServiceImpl implements CouponService {
                 .orElseThrow(CouponNotFoundException::new);
 
         coupon.update(quantity);
-        log.info("쿠폰 수량 변경 완료. couponId={}", couponId);
 
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String redisKey = "coupon:" + couponId + "stock:";
+
+                String redisValue = (quantity == null)
+                        ? String.valueOf(Long.MAX_VALUE)
+                        : String.valueOf(quantity);
+
+                redisTemplate.opsForValue().set(redisKey, redisValue);
+
+                log.info("Redis 재고 동기화(수정) 완료. key={}, newQuantity={}", redisKey, redisValue);
+            }
+        });
+
+        log.info("쿠폰 수량 변경 완료. couponId={}", couponId);
         return quantity;
     }
 

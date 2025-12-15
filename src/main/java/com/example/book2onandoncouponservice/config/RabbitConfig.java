@@ -1,10 +1,12 @@
-package com.example.book2onandoncouponservice.messaging.config;
+package com.example.book2onandoncouponservice.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,7 +31,19 @@ public class RabbitConfig {
     public static final String DLX_ROUTING_KEY_CANCEL = "coupon.cancel.dlq";
     public static final String QUEUE_CANCEL_DLQ = "book2.dev.coupon.cancel.dlq";
 
+    //쿠폰 발급
+    public static final String COUPON_EXCHANGE = "book2.dev.coupon.exchange";
+    public static final String QUEUE_ISSUE = "book2.dev.coupon.issue.queue";
+    public static final String ROUTING_KEY_ISSUE = "coupon.issue";
+    public static final String QUEUE_ISSUE_DLQ = "book2.dev.coupon.issue.dlq";
+    public static final String DLX_ROUTING_KEY_ISSUE = "coupon.issue.dlq";
+
     public static final String DLX_EXCHANGE = "book2.dev.dlx.coupon.exchange";
+
+    @Bean
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
+    }
 
     //공통 exchange
     @Bean
@@ -40,6 +54,11 @@ public class RabbitConfig {
     @Bean
     DirectExchange orderExchange() {
         return new DirectExchange(ORDER_EXCHANGE);
+    }
+
+    @Bean
+    DirectExchange couponExchange() {
+        return new DirectExchange(COUPON_EXCHANGE);
     }
 
     @Bean
@@ -129,5 +148,31 @@ public class RabbitConfig {
         return BindingBuilder.bind(cancelDlq())
                 .to(dlxExchange())
                 .with(DLX_ROUTING_KEY_CANCEL);
+    }
+
+    @Bean
+    public Queue issueQueue() {
+        return QueueBuilder.durable(QUEUE_ISSUE)
+                .deadLetterExchange(DLX_EXCHANGE)
+                .deadLetterRoutingKey(DLX_ROUTING_KEY_ISSUE)
+                .build();
+    }
+
+    @Bean
+    public Binding couponIssueBinding() {
+        return BindingBuilder.bind(issueQueue())
+                .to(couponExchange())
+                .with(ROUTING_KEY_ISSUE);
+    }
+
+    public Queue issueDlq() {
+        return new Queue(QUEUE_ISSUE_DLQ, true);
+    }
+
+    @Bean
+    public Binding issueDlqBinding() {
+        return BindingBuilder.bind(issueDlq())
+                .to(dlxExchange())
+                .with(DLX_ROUTING_KEY_ISSUE);
     }
 }

@@ -8,6 +8,7 @@ import com.example.book2onandoncouponservice.exception.CouponUseException;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,7 +22,8 @@ public class GlobalExceptionHandler {
     }
 
     //400 Bad Request
-    @ExceptionHandler({CouponIssueException.class, CouponUseException.class, IllegalArgumentException.class})
+    @ExceptionHandler({CouponIssueException.class, CouponUseException.class, IllegalArgumentException.class,
+            MethodArgumentNotValidException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException e) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
