@@ -24,7 +24,8 @@ public enum CouponErrorCode {
     INVALID_COUPON_ORDER_MATCH(HttpStatus.BAD_REQUEST, "해당 주문에 사용한 쿠폰이 아닙니다."),
 
     // 500 Server Error
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+    FAIL_TO_ISSUE_COUPON(HttpStatus.INTERNAL_SERVER_ERROR, "쿠폰 발급 메시지 전송에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

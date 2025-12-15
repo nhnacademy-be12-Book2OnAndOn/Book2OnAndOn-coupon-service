@@ -1,6 +1,6 @@
 package com.example.book2onandoncouponservice.messaging.consumer;
 
-import com.example.book2onandoncouponservice.messaging.config.RabbitConfig;
+import com.example.book2onandoncouponservice.config.RabbitConfig;
 import com.example.book2onandoncouponservice.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

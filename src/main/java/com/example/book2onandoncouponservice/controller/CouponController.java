@@ -5,6 +5,7 @@ import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.request.CouponUpdateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.service.CouponService;
+import com.example.book2onandoncouponservice.service.impl.CouponIssueService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CouponController {
 
     private final CouponService couponService;
+    private final CouponIssueService couponIssueService;
 
     @GetMapping("/admin/coupons")
     public ResponseEntity<Page<CouponResponseDto>> getCoupons(
@@ -84,14 +86,12 @@ public class CouponController {
     }
 
     @PostMapping("/coupons/{couponId}")
-    public ResponseEntity<Void> issueCoupon(
+    public ResponseEntity<String> issueCoupon(
             @RequestHeader("X-USER-ID") Long userId,
             @PathVariable("couponId") Long couponId) {
 
-        Long memberCouponId = couponService.issueMemberCoupon(userId, couponId);
-        log.info("사용자 발급 완료: UserId={}, MemberCouponId={}", userId, memberCouponId);
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        couponIssueService.issueRequest(userId, couponId);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("쿠폰 발급 요청이 접수되었습니다. 잠시 후 보관함을 확인해주세요.");
     }
 
 }

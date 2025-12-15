@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
@@ -33,11 +34,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class CouponServiceTest {
@@ -52,6 +56,9 @@ class CouponServiceTest {
     @Mock
     private MemberCouponRepository memberCouponRepository;
 
+    @Mock
+    StringRedisTemplate redisTemplate;
+
     // ==========================================
     // 1. createCouponUnit (쿠폰 생성)
     // ==========================================
@@ -61,23 +68,31 @@ class CouponServiceTest {
     void createCouponUnit_Success() {
         // given
         Long policyId = 1L;
+        // DTO 생성 (수량, 정책 ID)
         CouponCreateRequestDto req = new CouponCreateRequestDto(1000, policyId);
 
-        // Mocking
+        // Policy Mocking
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.getCouponPolicyStatus()).willReturn(CouponPolicyStatus.ACTIVE);
         given(policyRepository.findById(policyId)).willReturn(Optional.of(policy));
 
+        // Saved Coupon Mocking
         Coupon savedCoupon = mock(Coupon.class);
         given(savedCoupon.getCouponId()).willReturn(10L);
+        // 서비스 내부에서 new Coupon()으로 객체를 생성하므로, any(Coupon.class)로 매칭
         given(couponRepository.save(any(Coupon.class))).willReturn(savedCoupon);
 
-        // when
-        Long resultId = couponService.createCouponUnit(req);
+        // TransactionSynchronizationManager 모킹
+        try (MockedStatic<TransactionSynchronizationManager> synchronizationManager = mockStatic(
+                TransactionSynchronizationManager.class)) {
 
-        // then
-        assertThat(resultId).isEqualTo(10L);
-        verify(couponRepository).save(any(Coupon.class));
+            // when
+            Long resultId = couponService.createCouponUnit(req);
+
+            // then
+            assertThat(resultId).isEqualTo(10L);
+            verify(couponRepository).save(any(Coupon.class));
+        }
     }
 
     @Test
@@ -274,16 +289,24 @@ class CouponServiceTest {
     @Test
     @DisplayName("쿠폰 수량 수정 성공")
     void updateAccount_Success() {
+        // given
         Long couponId = 1L;
         int newQuantity = 500;
         Coupon coupon = mock(Coupon.class);
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
 
-        Integer result = couponService.updateAccount(couponId, newQuantity);
+        // TransactionSynchronizationManager의 static 메서드를 모킹하여 에러 방지
+        try (MockedStatic<TransactionSynchronizationManager> synchronizationManager = mockStatic(
+                TransactionSynchronizationManager.class)) {
 
-        assertThat(result).isEqualTo(newQuantity);
-        verify(coupon).update(newQuantity);
+            // when
+            Integer result = couponService.updateAccount(couponId, newQuantity);
+
+            // then
+            assertThat(result).isEqualTo(newQuantity);
+            verify(coupon).update(newQuantity);
+        }
     }
 
     // ==========================================

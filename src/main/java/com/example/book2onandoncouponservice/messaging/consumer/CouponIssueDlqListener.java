@@ -1,27 +1,25 @@
-package com.example.book2onandoncouponservice.scheduler;
+package com.example.book2onandoncouponservice.messaging.consumer;
 
 import com.example.book2onandoncouponservice.client.DoorayHookClient;
 import com.example.book2onandoncouponservice.config.RabbitConfig;
 import com.example.book2onandoncouponservice.dooray.DoorayMessagePayload;
+import com.example.book2onandoncouponservice.messaging.CouponIssueMessage;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WelcomeDlqScheduler {
+public class CouponIssueDlqListener {
     private final RabbitTemplate rabbitTemplate;
-    private final MessageConverter messageConverter;
     private final DoorayHookClient doorayHookClient;
 
     @Value("${dooray.service.id}")
@@ -33,45 +31,32 @@ public class WelcomeDlqScheduler {
     @Value("${dooray.bot.botToken}")
     private String botToken;
 
-    @Scheduled(cron = "0 0 0 * * * ")
-    @SchedulerLock(
-            name = "welcome_coupon_task",
-            lockAtLeastFor = "30s",
-            lockAtMostFor = "10m"
-    )
-    public void welcomeDlq() {
-        log.info("welcome.dlq 처리 스케줄러 시작");
+    @RabbitListener(queues = RabbitConfig.QUEUE_ISSUE_DLQ)
+    public void IssueCouponDlq(Message message) {
+        try {
+            long retryCount = getRetryCount(message);
+            String reason = getErrorReason(message);
 
-        while (true) {
-            Message message = rabbitTemplate.receive(RabbitConfig.QUEUE_BIRTHDAY_DLQ);
+            CouponIssueMessage payload = (CouponIssueMessage) rabbitTemplate.getMessageConverter().fromMessage(message);
 
-            if (message == null) {
-                log.info("DLQ가 비어있습니다. 스케줄러 종료");
-                break;
+            if (retryCount >= 3) {
+
+                log.error("쿠폰 발급 최종 실패. 알림 발송. orderId={}, count={}, reason={}", payload, retryCount, reason);
+
+                sendDoorayAlert(payload.toString(), (int) retryCount, reason);
+
+            } else {
+
+                log.info("쿠폰 발급 재시도({}). payload={}", retryCount, payload);
+
+                rabbitTemplate.convertAndSend(
+                        RabbitConfig.COUPON_EXCHANGE,
+                        RabbitConfig.ROUTING_KEY_ISSUE,
+                        payload
+                );
             }
-
-            try {
-                long retryCount = getRetryCount(message);
-                String reason = getErrorReason(message);
-
-                Object payload = messageConverter.fromMessage(message);
-                Long userId = (Long) payload;
-
-                if (retryCount >= 2) {
-                    log.error("최대 재시도 횟수 초과. 알림 발송 및 폐기. userId={}, count={}", userId, retryCount);
-                    sendDoorayAlert(String.valueOf(userId), (int) retryCount, reason);
-                } else {
-                    log.info("재시도 횟수({}). 원본 큐로 복구 userId: {}", retryCount, userId);
-
-                    rabbitTemplate.convertAndSend(
-                            RabbitConfig.USER_EXCHANGE,
-                            RabbitConfig.ROUTING_KEY_WELCOME,
-                            userId
-                    );
-                }
-            } catch (Exception e) {
-                log.error("Welcome Coupon DLQ 처리 중 예외 발생", e);
-            }
+        } catch (Exception e) {
+            log.error("Issue DLQ 처리 중 예외 발생", e);
         }
     }
 
@@ -105,7 +90,7 @@ public class WelcomeDlqScheduler {
         try {
             DoorayMessagePayload payload = DoorayMessagePayload.builder()
                     .botName("Coupon-Service-Alarm")
-                    .text("[긴급] 웰컴 쿠폰 발급 실패 (DLQ)")
+                    .text("[긴급] 쿠폰 발급 실패 (DLQ)")
                     .attachments(Collections.singletonList(
                             DoorayMessagePayload.Attachment.builder()
                                     .title("최대 재시도 횟수(" + retryCount + "회) 초과")
