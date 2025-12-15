@@ -80,9 +80,9 @@ class SchedulerTest {
         // then
         // 원본 큐로 복구되었는지 확인
         verify(rabbitTemplate, times(1)).convertAndSend(
-                eq(RabbitConfig.USER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_WELCOME),
-                eq(100L)
+                RabbitConfig.USER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_WELCOME,
+                100L
         );
         // 알림은 발송되지 않아야 함
         verify(doorayHookClient, never()).sendMessage(anyString(), anyString(), anyString(), any());
@@ -130,9 +130,9 @@ class SchedulerTest {
 
         // then
         verify(rabbitTemplate, times(1)).convertAndSend(
-                eq(RabbitConfig.USER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_BIRTHDAY),
-                eq(200L)
+                RabbitConfig.USER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_BIRTHDAY,
+                200L
         );
     }
 

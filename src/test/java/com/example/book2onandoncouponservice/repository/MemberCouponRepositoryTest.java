@@ -69,7 +69,6 @@ class MemberCouponRepositoryTest {
             mc.use(orderId);
         } else if (status == MemberCouponStatus.EXPIRED) {
             // 만료 처리 (메서드가 없으면 Reflection 사용)
-            // mc.expired();
             ReflectionTestUtils.setField(mc, "memberCouponStatus", MemberCouponStatus.EXPIRED);
         }
 

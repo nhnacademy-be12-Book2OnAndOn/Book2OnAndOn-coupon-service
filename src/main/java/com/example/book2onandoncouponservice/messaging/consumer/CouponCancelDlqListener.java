@@ -64,11 +64,11 @@ public class CouponCancelDlqListener {
     private long getRetryCount(Message message) {
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
         if (headers.containsKey(X_DEATH_HEADER)) {
-            List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get("x-death");
+            List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get(X_DEATH_HEADER);
             if (!deaths.isEmpty()) {
                 // RabbitMQ 버전에 따라 Long 또는 Integer일 수 있음
                 Object count = deaths.get(0).get("count");
-                return count instanceof Long ? (Long) count : ((Integer) count).longValue();
+                return count instanceof Long l ? l : ((Integer) count).longValue();
             }
         }
         return 0L;
@@ -78,7 +78,7 @@ public class CouponCancelDlqListener {
     private String getErrorReason(Message message) {
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
         if (headers.containsKey(X_DEATH_HEADER)) {
-            List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get("x-death");
+            List<Map<String, Object>> deaths = (List<Map<String, Object>>) headers.get(X_DEATH_HEADER);
             if (!deaths.isEmpty()) {
                 return String.valueOf(deaths.get(0).get("reason"));
             }

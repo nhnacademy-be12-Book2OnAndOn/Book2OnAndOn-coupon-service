@@ -149,7 +149,7 @@ class MemberCouponControllerTest {
                         .build();
 
         // given
-        given(memberCouponService.getCouponTargets(eq(memberCouponId)))
+        given(memberCouponService.getCouponTargets(memberCouponId))
                 .willReturn(responseDto);
 
         // when & then
@@ -164,6 +164,6 @@ class MemberCouponControllerTest {
                 .andExpect(jsonPath("$.targetCategoryIds[0]").value(10L));  // 리스트 첫 번째 요소 검증
 
         // Verify: 서비스 메서드가 정확한 ID로 호출되었는지 검증
-        verify(memberCouponService).getCouponTargets(eq(memberCouponId));
+        verify(memberCouponService).getCouponTargets(memberCouponId);
     }
 }

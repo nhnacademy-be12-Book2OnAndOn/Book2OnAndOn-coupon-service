@@ -65,9 +65,9 @@ class CouponCancelDlqListenerTest {
 
         // then
         verify(rabbitTemplate).convertAndSend(
-                eq(RabbitConfig.ORDER_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_CANCEL),
-                eq(orderId)
+                RabbitConfig.ORDER_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_CANCEL,
+                orderId
         );
         verify(doorayHookClient, never()).sendMessage(anyString(), anyString(), anyString(), any());
     }

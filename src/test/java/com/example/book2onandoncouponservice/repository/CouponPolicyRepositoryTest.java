@@ -166,13 +166,14 @@ class CouponPolicyRepositoryTest {
         );
 
         // then
-        assertThat(resultIds).hasSize(3); // bookPolicy, categoryPolicy, allPolicy
-        assertThat(resultIds).contains(
-                bookPolicy.getCouponPolicyId(),
-                categoryPolicy.getCouponPolicyId(),
-                allPolicy.getCouponPolicyId()
-        );
-        assertThat(resultIds).doesNotContain(otherBookPolicy.getCouponPolicyId());
+        assertThat(resultIds)
+                .hasSize(3) // bookPolicy, categoryPolicy, allPolicy
+                .contains(
+                        bookPolicy.getCouponPolicyId(),
+                        categoryPolicy.getCouponPolicyId(),
+                        allPolicy.getCouponPolicyId()
+                )
+                .doesNotContain(otherBookPolicy.getCouponPolicyId());
     }
 
     @Test

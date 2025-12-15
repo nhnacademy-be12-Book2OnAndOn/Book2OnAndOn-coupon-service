@@ -62,13 +62,13 @@ class CouponIssueDlqListenerTest {
         given(messageConverter.fromMessage(message)).willReturn(dto);
 
         // when
-        couponIssueDlqListener.IssueCouponDlq(message);
+        couponIssueDlqListener.issueCouponDlq(message);
 
         // then
         verify(rabbitTemplate).convertAndSend(
-                eq(RabbitConfig.COUPON_EXCHANGE),
-                eq(RabbitConfig.ROUTING_KEY_ISSUE),
-                eq(dto)
+                RabbitConfig.COUPON_EXCHANGE,
+                RabbitConfig.ROUTING_KEY_ISSUE,
+                dto
         );
         verify(doorayHookClient, never()).sendMessage(anyString(), anyString(), anyString(), any());
     }
@@ -84,7 +84,7 @@ class CouponIssueDlqListenerTest {
         given(messageConverter.fromMessage(message)).willReturn(dto);
 
         // when
-        couponIssueDlqListener.IssueCouponDlq(message);
+        couponIssueDlqListener.issueCouponDlq(message);
 
         // then
         verify(doorayHookClient).sendMessage(
@@ -101,7 +101,7 @@ class CouponIssueDlqListenerTest {
         given(message.getMessageProperties()).willThrow(new RuntimeException("Error"));
 
         // when & then
-        assertDoesNotThrow(() -> couponIssueDlqListener.IssueCouponDlq(message));
+        assertDoesNotThrow(() -> couponIssueDlqListener.issueCouponDlq(message));
     }
 
     // Helper
