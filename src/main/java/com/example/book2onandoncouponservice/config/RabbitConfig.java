@@ -32,11 +32,11 @@ public class RabbitConfig {
     public static final String QUEUE_CANCEL_DLQ = "book2.dev.coupon.cancel.dlq";
 
     //쿠폰 발급
-    public static final String COUPON_EXCHANGE = "book2.dev.coupon.exchange";
-    public static final String QUEUE_ISSUE = "book2.dev.coupon.issue.queue";
-    public static final String ROUTING_KEY_ISSUE = "coupon.issue";
-    public static final String QUEUE_ISSUE_DLQ = "book2.dev.coupon.issue.dlq";
-    public static final String DLX_ROUTING_KEY_ISSUE = "coupon.issue.dlq";
+    public static final String COUPON_EXCHANGE = "book2.dev.coupon.exchange.test";
+    public static final String QUEUE_ISSUE = "book2.dev.coupon.issue.queue.test";
+    public static final String ROUTING_KEY_ISSUE = "coupon.issue.test";
+    public static final String QUEUE_ISSUE_DLQ = "book2.dev.coupon.issue.dlq.test";
+    public static final String DLX_ROUTING_KEY_ISSUE = "coupon.issue.dlq.test";
 
     public static final String DLX_EXCHANGE = "book2.dev.dlx.coupon.exchange";
 

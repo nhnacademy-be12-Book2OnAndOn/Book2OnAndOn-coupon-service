@@ -1,6 +1,7 @@
 package com.example.book2onandoncouponservice.messaging.consumer;
 
 import com.example.book2onandoncouponservice.config.RabbitConfig;
+import com.example.book2onandoncouponservice.messaging.WelcomeMessage;
 import com.example.book2onandoncouponservice.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,9 @@ public class WelcomeCouponMessageListener {
     private final CouponService couponService;
 
     @RabbitListener(queues = RabbitConfig.QUEUE_WELCOME)
-    public void receive(Long userId) {
+    public void receive(WelcomeMessage message) {
+        Long userId = message.getUserId();
+
         log.info("RabbitMQ -> 회원가입 이벤트 수신. userId={}", userId);
 
         try {

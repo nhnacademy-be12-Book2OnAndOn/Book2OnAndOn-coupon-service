@@ -47,16 +47,16 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     Optional<Coupon> findByCouponPolicy_CouponPolicyId(Long couponPolicyId);
 
     @Query("SELECT DISTINCT c FROM Coupon c " +
-            "JOIN FETCH c.couponPolicy p " +  // 쿠폰과 정책을 한번에 로딩 (N+1 방지)
+            "JOIN FETCH c.couponPolicy p " +
             "LEFT JOIN CouponPolicyTargetBook b ON b.couponPolicy = p " +
             "LEFT JOIN CouponPolicyTargetCategory cat ON cat.couponPolicy = p " +
             "WHERE p.couponPolicyStatus = 'ACTIVE' " +
             "AND (" +
-            "   (p.couponPolicyType = 'BOOK' AND b.bookId = :bookId) " +
+            "   (p.couponPolicyType = 'BOOK' AND (b.bookId = :bookId OR b.bookId IS NULL)) " + // 타겟이 없으면 전체 허용
             "   OR " +
-            "   (p.couponPolicyType = 'CATEGORY' AND cat.categoryId IN :categoryIds) " +
+            "   (p.couponPolicyType = 'CATEGORY' AND (cat.categoryId IN :categoryIds OR cat.categoryId IS NULL)) " +
             "   OR " +
-            "   (p.couponPolicyType = 'CUSTOM') " + // 전체 대상
+            "   (p.couponPolicyType = 'CUSTOM') " +
             ")")
     List<Coupon> findAppliableCoupons(@Param("bookId") Long bookId,
                                       @Param("categoryIds") List<Long> categoryIds);

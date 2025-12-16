@@ -32,7 +32,7 @@ public class CouponIssueService {
 
         try {
             CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
-            rabbitTemplate.convertAndSend(RabbitConfig.COUPON_EXCHANGE, RabbitConfig.QUEUE_ISSUE, message);
+            rabbitTemplate.convertAndSend(RabbitConfig.COUPON_EXCHANGE, RabbitConfig.ROUTING_KEY_ISSUE, message);
 
             log.info("쿠폰 발급 메시지 큐 전송. userId={}", userId);
 
