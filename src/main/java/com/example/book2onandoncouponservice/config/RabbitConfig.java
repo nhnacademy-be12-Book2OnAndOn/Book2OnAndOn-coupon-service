@@ -13,11 +13,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    public static final String USER_EXCHANGE = "book2.dev.user.exchange.test";
-    public static final String QUEUE_WELCOME = "book2.dev.welcome.queue.test";
-    public static final String ROUTING_KEY_WELCOME = "coupon.welcome.test";
-    public static final String DLX_ROUTING_KEY_WELCOME = "coupon.welcome.dlq.test";
-    public static final String QUEUE_WELCOME_DLQ = "book2.dev.welcome.dlq.test";
+    public static final String USER_EXCHANGE = "book2.dev.user.exchange";
+    public static final String QUEUE_WELCOME = "book2.dev.welcome.queue";
+    public static final String ROUTING_KEY_WELCOME = "coupon.welcome";
+    public static final String DLX_ROUTING_KEY_WELCOME = "coupon.welcome.dlq";
+    public static final String QUEUE_WELCOME_DLQ = "book2.dev.welcome.dlq";
 
     public static final String QUEUE_BIRTHDAY = "book2.dev.birthday.queue";
     public static final String QUEUE_BIRTHDAY_DLQ = "book2.dev.birthday.dlq";
@@ -32,11 +32,11 @@ public class RabbitConfig {
     public static final String QUEUE_CANCEL_DLQ = "book2.dev.coupon.cancel.dlq";
 
     //쿠폰 발급
-    public static final String COUPON_EXCHANGE = "book2.dev.coupon.exchange.test";
-    public static final String QUEUE_ISSUE = "book2.dev.coupon.issue.queue.test";
+    public static final String COUPON_EXCHANGE = "book2.dev.coupon.exchange";
+    public static final String QUEUE_ISSUE = "book2.dev.coupon.issue.queue";
     public static final String ROUTING_KEY_ISSUE = "coupon.issue.test";
-    public static final String QUEUE_ISSUE_DLQ = "book2.dev.coupon.issue.dlq.test";
-    public static final String DLX_ROUTING_KEY_ISSUE = "coupon.issue.dlq.test";
+    public static final String QUEUE_ISSUE_DLQ = "book2.dev.coupon.issue.dlq";
+    public static final String DLX_ROUTING_KEY_ISSUE = "coupon.issue.dlq";
 
     public static final String DLX_EXCHANGE = "book2.dev.dlx.coupon.exchange";
 
