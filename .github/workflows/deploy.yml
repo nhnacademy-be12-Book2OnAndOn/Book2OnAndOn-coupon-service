@@ -2,7 +2,7 @@ name: CI/CD for Coupon Service
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
