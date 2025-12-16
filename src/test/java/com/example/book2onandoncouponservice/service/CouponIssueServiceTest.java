@@ -69,7 +69,7 @@ class CouponIssueServiceTest {
         // 2. RabbitMQ 전송 호출 확인
         verify(rabbitTemplate).convertAndSend(
                 eq(RabbitConfig.COUPON_EXCHANGE),
-                eq(RabbitConfig.QUEUE_ISSUE),
+                eq(RabbitConfig.ROUTING_KEY_ISSUE),
                 any(CouponIssueMessage.class)
         );
 
