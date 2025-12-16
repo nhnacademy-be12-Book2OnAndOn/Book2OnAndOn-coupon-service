@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.book2onandoncouponservice.messaging.WelcomeMessage;
 import com.example.book2onandoncouponservice.messaging.consumer.WelcomeCouponMessageListener;
 import com.example.book2onandoncouponservice.service.CouponService;
 import org.junit.jupiter.api.DisplayName;
@@ -28,9 +29,10 @@ class WelcomeCouponMessageListenerTest {
     void receive_Success() {
         // given
         Long userId = 1L;
+        WelcomeMessage message = new WelcomeMessage(userId);
 
         // when
-        welcomeCouponMessageListener.receive(userId);
+        welcomeCouponMessageListener.receive(message);
 
         // then
         verify(couponService, times(1)).issueWelcomeCoupon(userId);
@@ -41,10 +43,11 @@ class WelcomeCouponMessageListenerTest {
     void receive_Exception() {
         // given
         Long userId = 1L;
+        WelcomeMessage message = new WelcomeMessage(userId);
         doThrow(new RuntimeException("에러"))
                 .when(couponService).issueWelcomeCoupon(userId);
 
         // when & then
-        assertThrows(RuntimeException.class, () -> welcomeCouponMessageListener.receive(userId));
+        assertThrows(RuntimeException.class, () -> welcomeCouponMessageListener.receive(message));
     }
 }
