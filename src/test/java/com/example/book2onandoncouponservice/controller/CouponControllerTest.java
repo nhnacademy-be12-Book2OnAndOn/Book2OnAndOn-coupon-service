@@ -189,7 +189,7 @@ class CouponControllerTest {
     void getAppliableCoupons_Success() throws Exception {
         given(couponService.getAppliableCoupons(anyLong(), anyList())).willReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/appliable")
+        mockMvc.perform(get("/coupons/appliable")
                         .param("bookId", "1")
                         .param("categoryIds", "10,20"))
                 .andExpect(status().isOk())
