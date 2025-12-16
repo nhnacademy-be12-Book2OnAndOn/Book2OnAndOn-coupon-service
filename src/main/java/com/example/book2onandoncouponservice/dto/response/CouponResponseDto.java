@@ -7,8 +7,10 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class CouponResponseDto {
 

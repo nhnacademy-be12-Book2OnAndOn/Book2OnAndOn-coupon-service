@@ -2,7 +2,7 @@ name: CI/CD for Coupon Service
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -22,10 +22,26 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build with Maven
+      - name: Cache SonarQube packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and Analyze with SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw clean package -DskipTests
+          ./mvnw clean verify sonar:sonar \
+            -Dsonar.projectKey=Book2onandon-coupon-service \
+            -Dsonar.projectName="Book2onandon-coupon-service" \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dspring.cloud.config.enabled=false \
+            -Dspring.config.import="optional:file:./"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -58,20 +74,35 @@ jobs:
             
             docker compose pull coupon-1 coupon-2
 
-            # [1] coupon-1 배포
+            # [1] coupon-1 배포 (Rolling Update)
             INSTANCE_ID_1="$SERVICE_NAME:coupon-1"
+            # 유레카에서 제외 (OUT_OF_SERVICE)
             curl -X PUT "$EUREKA_URL/apps/$SERVICE_NAME/$INSTANCE_ID_1/status?value=OUT_OF_SERVICE" || true
+            
             sleep 30
+            
+            # 컨테이너 재시작
             docker compose up -d coupon-1
+            
             sleep 40
+            
+            # 유레카 복귀 (UP)
             curl -X PUT "$EUREKA_URL/apps/$SERVICE_NAME/$INSTANCE_ID_1/status?value=UP" || true
 
-            # [2] coupon-2 배포
+            # [2] coupon-2 배포 (Rolling Update)
             INSTANCE_ID_2="$SERVICE_NAME:coupon-2"
+            # 유레카에서 제외
             curl -X PUT "$EUREKA_URL/apps/$SERVICE_NAME/$INSTANCE_ID_2/status?value=OUT_OF_SERVICE" || true
+            
             sleep 30
+            
+            # 컨테이너 재시작
             docker compose up -d coupon-2
+            
             sleep 40
+            
+            # 유레카 복귀
             curl -X PUT "$EUREKA_URL/apps/$SERVICE_NAME/$INSTANCE_ID_2/status?value=UP" || true
 
+            # 미사용 이미지 정리
             docker image prune -f

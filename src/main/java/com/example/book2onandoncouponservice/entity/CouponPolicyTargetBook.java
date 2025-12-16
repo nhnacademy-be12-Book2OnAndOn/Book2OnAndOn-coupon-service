@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "CouponPolicyTargetBook")
+@Table(name = "coupon_policy_target_book")
 public class CouponPolicyTargetBook {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
