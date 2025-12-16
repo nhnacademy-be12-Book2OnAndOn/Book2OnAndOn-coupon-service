@@ -77,7 +77,7 @@ public class CouponController {
         return ResponseEntity.ok(coupon);
     }
 
-    @GetMapping("/appliable")
+    @GetMapping("/coupons/appliable")
     public ResponseEntity<List<CouponResponseDto>> getAppliableCoupons(
             @RequestParam Long bookId,
             @RequestParam List<Long> categoryIds) {
