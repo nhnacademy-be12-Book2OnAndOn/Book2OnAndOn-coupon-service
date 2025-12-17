@@ -8,7 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.example.book2onandoncouponservice.handler.DlqErrorHandler;
-import com.example.book2onandoncouponservice.messaging.consumer.CouponCancelDlqListener;
+import com.example.book2onandoncouponservice.messaging.consumer.WelcomeDlqListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,10 +20,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 
 @ExtendWith(MockitoExtension.class)
-class CouponCancelDlqListenerTest {
+class WelcomeDlqListenerTest {
 
     @InjectMocks
-    private CouponCancelDlqListener listener;
+    private WelcomeDlqListener listener;
 
     @Mock
     private RabbitTemplate rabbitTemplate;
@@ -35,40 +35,39 @@ class CouponCancelDlqListenerTest {
     private MessageConverter messageConverter;
 
     @Test
-    @DisplayName("취소 DLQ 처리 성공: 알림 발송 확인")
-    void cancelCouponDlq_Success() {
+    @DisplayName("웰컴 쿠폰 DLQ 처리 성공")
+    void welcomeDlq_Success() {
         // given
         Message message = mock(Message.class);
-        Long orderId = 12345L;
-        String reason = "Test Error Reason";
+        Long userId = 777L;
+        String reason = "Welcome Error";
 
         given(dlqErrorHandler.getErrorReason(any(Message.class))).willReturn(reason);
         given(rabbitTemplate.getMessageConverter()).willReturn(messageConverter);
-        given(messageConverter.fromMessage(any(Message.class))).willReturn(orderId);
+        given(messageConverter.fromMessage(any(Message.class))).willReturn(userId);
 
         // when
-        listener.cancelCouponDlq(message);
+        listener.welcomeDlq(message);
 
         // then
         verify(dlqErrorHandler).sendDoorayAlert(
-                "[긴급] 쿠폰 롤백 실패 (DLQ)",
-                String.valueOf(orderId),
+                "[긴급] 웰컴쿠폰 발급 실패 (DLQ)",
+                String.valueOf(userId),
                 reason
         );
     }
 
     @Test
-    @DisplayName("취소 DLQ 처리 중 예외 발생: 로그 남기고 종료 (예외 던지지 않음)")
-    void cancelCouponDlq_Exception() {
+    @DisplayName("웰컴 쿠폰 DLQ 처리 중 예외 발생")
+    void welcomeDlq_Exception() {
         // given
         Message message = mock(Message.class);
-        given(dlqErrorHandler.getErrorReason(any(Message.class))).willThrow(new RuntimeException("Error!"));
+        given(rabbitTemplate.getMessageConverter()).willThrow(new RuntimeException("Error"));
 
         // when
-        listener.cancelCouponDlq(message);
+        listener.welcomeDlq(message);
 
         // then
-        // 예외가 catch 블록에서 잡혔으므로 sendDoorayAlert는 호출되지 않아야 함
         verify(dlqErrorHandler, never()).sendDoorayAlert(anyString(), anyString(), anyString());
     }
 }
