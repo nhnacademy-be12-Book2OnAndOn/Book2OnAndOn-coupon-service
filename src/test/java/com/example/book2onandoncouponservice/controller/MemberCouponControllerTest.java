@@ -104,8 +104,6 @@ class MemberCouponControllerTest {
     @DisplayName("쿠폰 적용 대상 조회")
     void getCouponTargets_Success() throws Exception {
         Long memberCouponId = 1L;
-        // DTO에 AllArgsConstructor나 Builder가 있다고 가정
-        // given(memberCouponService.getCouponTargets(memberCouponId)).willReturn(new CouponTargetResponseDto(...));
 
         mockMvc.perform(get("/my-coupon/{member-coupon-id}/targets", memberCouponId))
                 .andExpect(status().isOk());

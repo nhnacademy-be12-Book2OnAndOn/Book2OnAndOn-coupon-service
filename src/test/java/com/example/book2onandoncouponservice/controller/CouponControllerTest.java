@@ -111,7 +111,7 @@ class CouponControllerTest {
                 .andDo(print());
 
         // Service 메서드 호출 검증
-        verify(couponIssueService).issueRequest(eq(userId), eq(couponId));
+        verify(couponIssueService).issueRequest(userId, couponId);
     }
 
     @Test
