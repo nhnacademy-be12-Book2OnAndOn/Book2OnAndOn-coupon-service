@@ -30,7 +30,7 @@ public class MemberCouponController {
     public ResponseEntity<Void> useCoupon(@PathVariable("member-coupon-id") Long memberCouponId,
                                           @RequestHeader("X-USER-ID") Long userId,
                                           @RequestBody UseCouponRequestDto requestDto) {
-        memberCouponService.useMemberCoupon(memberCouponId, userId, requestDto.getOrderId());
+        memberCouponService.useMemberCoupon(memberCouponId, userId, requestDto.getOrderNumber());
         return ResponseEntity.ok().build();
     }
 

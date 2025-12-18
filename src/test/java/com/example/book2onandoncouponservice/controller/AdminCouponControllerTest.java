@@ -25,11 +25,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AdminCouponController.class)
+@ActiveProfiles("test")
 class AdminCouponControllerTest {
 
     @Autowired
@@ -115,7 +117,7 @@ class AdminCouponControllerTest {
         ReflectionTestUtils.setField(requestDto, "quantity", 500);
 
         // Service가 업데이트된 수량(500)을 반환한다고 가정
-        given(couponService.updateAccount(eq(couponId), eq(500)))
+        given(couponService.updateAccount(couponId, 500))
                 .willReturn(500);
 
         // when & then

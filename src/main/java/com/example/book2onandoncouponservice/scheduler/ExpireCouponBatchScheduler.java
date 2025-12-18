@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ExpireCouponBatchScheduler {
     private final JobLauncher jobLauncher;
-    private final Job couponExpirejob;
+    private final Job couponExpireJob;
 
     @Scheduled(cron = "0 0 0 * * *")
     @SchedulerLock(
@@ -35,7 +35,7 @@ public class ExpireCouponBatchScheduler {
                     .addLong("time", System.currentTimeMillis())
                     .toJobParameters();
 
-            jobLauncher.run(couponExpirejob, jobParameters);
+            jobLauncher.run(couponExpireJob, jobParameters);
         } catch (JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
                  JobParametersInvalidException | JobRestartException e) {
             log.error("쿠폰 만료 배치 실행 중 오류 발생", e);

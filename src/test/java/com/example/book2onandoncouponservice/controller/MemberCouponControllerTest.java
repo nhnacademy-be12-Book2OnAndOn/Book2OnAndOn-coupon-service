@@ -21,11 +21,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MemberCouponController.class)
+@ActiveProfiles("test")
 class MemberCouponControllerTest {
 
     @Autowired
@@ -43,7 +45,6 @@ class MemberCouponControllerTest {
         Long memberCouponId = 1L;
         Long userId = 100L;
         UseCouponRequestDto requestDto = new UseCouponRequestDto();
-        // requestDto.setOrderId(123L); // DTO 값 설정
 
         mockMvc.perform(post("/my-coupon/{member-coupon-id}/use", memberCouponId)
                         .header("X-USER-ID", userId)
@@ -104,8 +105,6 @@ class MemberCouponControllerTest {
     @DisplayName("쿠폰 적용 대상 조회")
     void getCouponTargets_Success() throws Exception {
         Long memberCouponId = 1L;
-        // DTO에 AllArgsConstructor나 Builder가 있다고 가정
-        // given(memberCouponService.getCouponTargets(memberCouponId)).willReturn(new CouponTargetResponseDto(...));
 
         mockMvc.perform(get("/my-coupon/{member-coupon-id}/targets", memberCouponId))
                 .andExpect(status().isOk());
