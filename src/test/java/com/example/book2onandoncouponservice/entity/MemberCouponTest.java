@@ -34,14 +34,14 @@ class MemberCouponTest {
                 .memberCouponEndDate(future)
                 .build();
 
-        Long orderId = 100L;
+        String orderNumber = "100L";
 
         // when
-        mc.use(orderId);
+        mc.use(orderNumber);
 
         // then
         assertThat(mc.getMemberCouponStatus()).isEqualTo(MemberCouponStatus.USED);
-        assertThat(mc.getOrderId()).isEqualTo(orderId);
+        assertThat(mc.getOrderNumber()).isEqualTo(orderNumber);
         assertThat(mc.getMemberCouponUsedDate()).isNotNull();
     }
 
@@ -50,10 +50,10 @@ class MemberCouponTest {
     void use_Fail_AlreadyUsed() {
         // given
         MemberCoupon mc = MemberCoupon.builder().memberCouponEndDate(LocalDateTime.now().plusDays(1)).build();
-        mc.use(100L); // First usage
+        mc.use("100L"); // First usage
 
         // when & then
-        assertThatThrownBy(() -> mc.use(101L))
+        assertThatThrownBy(() -> mc.use("101L"))
                 .isInstanceOf(CouponUseException.class)
                 .hasMessage(CouponErrorCode.COUPON_ALREADY_USED.getMessage());
     }
@@ -67,7 +67,7 @@ class MemberCouponTest {
         ReflectionTestUtils.setField(mc, "memberCouponStatus", MemberCouponStatus.EXPIRED);
 
         // when & then
-        assertThatThrownBy(() -> mc.use(100L))
+        assertThatThrownBy(() -> mc.use("100L"))
                 .isInstanceOf(CouponUseException.class)
                 .hasMessage(CouponErrorCode.COUPON_EXPIRED.getMessage());
     }
@@ -82,7 +82,7 @@ class MemberCouponTest {
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> mc.use(100L))
+        assertThatThrownBy(() -> mc.use("100L"))
                 .isInstanceOf(CouponUseException.class)
                 .hasMessage(CouponErrorCode.COUPON_EXPIRED.getMessage());
     }
@@ -92,14 +92,14 @@ class MemberCouponTest {
     void cancelUsage_Success() {
         // given
         MemberCoupon mc = MemberCoupon.builder().memberCouponEndDate(LocalDateTime.now().plusDays(1)).build();
-        mc.use(100L); // USED 상태로 만듦
+        mc.use("100L"); // USED 상태로 만듦
 
         // when
         mc.cancelUsage();
 
         // then
         assertThat(mc.getMemberCouponStatus()).isEqualTo(MemberCouponStatus.NOT_USED);
-        assertThat(mc.getOrderId()).isNull();
+        assertThat(mc.getOrderNumber()).isNull();
         assertThat(mc.getMemberCouponUsedDate()).isNull();
     }
 

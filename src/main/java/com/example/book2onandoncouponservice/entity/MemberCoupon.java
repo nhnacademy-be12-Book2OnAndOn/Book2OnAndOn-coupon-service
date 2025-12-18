@@ -69,8 +69,8 @@ public class MemberCoupon {
     @Column(name = "member_coupon_used_date")
     private LocalDateTime memberCouponUsedDate;
 
-    @Column(name = "order_id")
-    private Long orderId;
+    @Column(name = "order_number")
+    private String orderNumber;
 
     public MemberCoupon(Long userId, Coupon coupon, LocalDateTime issuedDate, LocalDateTime endDate) {
         this.userId = userId;
@@ -80,7 +80,7 @@ public class MemberCoupon {
         this.memberCouponEndDate = endDate;
     }
 
-    public void use(Long orderId) {
+    public void use(String orderNumber) {
 
         if (this.memberCouponStatus == MemberCouponStatus.USED) {
             throw new CouponUseException(CouponErrorCode.COUPON_ALREADY_USED);
@@ -93,7 +93,7 @@ public class MemberCoupon {
 
         this.memberCouponStatus = MemberCouponStatus.USED;
         this.memberCouponUsedDate = LocalDateTime.now();
-        this.orderId = orderId;
+        this.orderNumber = orderNumber;
     }
 
     public void cancelUsage() {
@@ -103,7 +103,7 @@ public class MemberCoupon {
 
         this.memberCouponStatus = MemberCouponStatus.NOT_USED;
         this.memberCouponUsedDate = null;
-        this.orderId = null;
+        this.orderNumber = null;
     }
 
     public void expire() {

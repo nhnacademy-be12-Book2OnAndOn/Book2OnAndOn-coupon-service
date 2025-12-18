@@ -22,11 +22,11 @@ public class CouponCancelDlqListener {
         try {
             String reason = dlqErrorHandler.getErrorReason(message);
 
-            Long orderId = (Long) rabbitTemplate.getMessageConverter().fromMessage(message);
+            String orderNumber = (String) rabbitTemplate.getMessageConverter().fromMessage(message);
 
-            log.error("취소 롤백 최종 실패. 알림 발송. orderId={}, reason={}", orderId, reason);
+            log.error("취소 롤백 최종 실패. 알림 발송. orderNumber={}, reason={}", orderNumber, reason);
             String text = "[긴급] 쿠폰 롤백 실패 (DLQ)";
-            dlqErrorHandler.sendDoorayAlert(text, String.valueOf(orderId), reason);
+            dlqErrorHandler.sendDoorayAlert(text, orderNumber, reason);
 
         } catch (Exception e) {
             log.error("Cancel DLQ 처리 중 예외 발생", e);

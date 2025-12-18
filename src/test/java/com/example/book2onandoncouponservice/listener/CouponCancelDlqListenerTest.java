@@ -39,12 +39,12 @@ class CouponCancelDlqListenerTest {
     void cancelCouponDlq_Success() {
         // given
         Message message = mock(Message.class);
-        Long orderId = 12345L;
+        String orderNumber = "12345L";
         String reason = "Test Error Reason";
 
         given(dlqErrorHandler.getErrorReason(any(Message.class))).willReturn(reason);
         given(rabbitTemplate.getMessageConverter()).willReturn(messageConverter);
-        given(messageConverter.fromMessage(any(Message.class))).willReturn(orderId);
+        given(messageConverter.fromMessage(any(Message.class))).willReturn(orderNumber);
 
         // when
         listener.cancelCouponDlq(message);
@@ -52,7 +52,7 @@ class CouponCancelDlqListenerTest {
         // then
         verify(dlqErrorHandler).sendDoorayAlert(
                 "[긴급] 쿠폰 롤백 실패 (DLQ)",
-                String.valueOf(orderId),
+                String.valueOf(orderNumber),
                 reason
         );
     }

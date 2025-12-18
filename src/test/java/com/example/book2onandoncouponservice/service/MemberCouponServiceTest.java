@@ -116,35 +116,35 @@ class MemberCouponServiceTest {
     }
 
     // ==========================================
-    // 2. useMemberCoupon (쿠폰 사용 - orderId 추가됨)
+    // 2. useMemberCoupon (쿠폰 사용 - orderNumber 추가됨)
     // ==========================================
 
     @Test
-    @DisplayName("쿠폰 사용 성공 - orderId 전달 확인")
+    @DisplayName("쿠폰 사용 성공 - orderNumber 전달 확인")
     void useMemberCoupon_Success() {
         // given
         Long mcId = 1L;
         Long userId = 100L;
-        Long orderId = 12345L; // 주문 번호
+        String orderNumber = "12345L"; // 주문 번호
 
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
         given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
         given(memberCoupon.getUserId()).willReturn(userId); // 소유자 일치
 
         // when
-        memberCouponService.useMemberCoupon(mcId, userId, orderId);
+        memberCouponService.useMemberCoupon(mcId, userId, orderNumber);
 
         // then
-        verify(memberCoupon).use(orderId); // [핵심] orderId가 전달되었는지 확인
+        verify(memberCoupon).use(orderNumber); // [핵심] orderNumber가 전달되었는지 확인
     }
 
     @Test
     @DisplayName("쿠폰 사용 실패 - 쿠폰 없음 (404)")
     void useMemberCoupon_Fail_NotFound() {
-        Long orderId = 12345L;
+        String orderNumber = "12345L";
         given(memberCouponRepository.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(1L, 100L, orderId))
+        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(1L, 100L, orderNumber))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
@@ -154,13 +154,13 @@ class MemberCouponServiceTest {
         Long mcId = 1L;
         Long userId = 100L;
         Long otherUser = 999L;
-        Long orderId = 12345L;
+        String orderNumber = "12345L";
 
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
         given(memberCouponRepository.findById(mcId)).willReturn(Optional.of(memberCoupon));
         given(memberCoupon.getUserId()).willReturn(otherUser); // 다른 사람
 
-        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(mcId, userId, orderId))
+        assertThatThrownBy(() -> memberCouponService.useMemberCoupon(mcId, userId, orderNumber))
                 .isInstanceOf(CouponIssueException.class)
                 .hasMessage(CouponErrorCode.NOT_COUPON_OWNER.getMessage());
     }
@@ -173,15 +173,15 @@ class MemberCouponServiceTest {
     @DisplayName("주문 취소로 인한 쿠폰 복구 성공")
     void cancelCouponByOrder_Success() {
         // given
-        Long orderId = 12345L;
+        String orderNumber = "12345L";
         MemberCoupon memberCoupon = mock(MemberCoupon.class);
 
         // 주문 번호로 조회 성공 가정
-        given(memberCouponRepository.findByOrderId(orderId)).willReturn(Optional.of(memberCoupon));
+        given(memberCouponRepository.findByOrderNumber(orderNumber)).willReturn(Optional.of(memberCoupon));
 
-        given(memberCoupon.getOrderId()).willReturn(orderId);
+        given(memberCoupon.getOrderNumber()).willReturn(orderNumber);
         // when
-        memberCouponService.cancelMemberCoupon(orderId);
+        memberCouponService.cancelMemberCoupon(orderNumber);
 
         // then
         verify(memberCoupon).cancelUsage(); // 취소 메서드 호출 확인
@@ -190,10 +190,10 @@ class MemberCouponServiceTest {
     @Test
     @DisplayName("주문 취소 실패 - 해당 주문에 사용된 쿠폰 없음")
     void cancelCouponByOrder_Fail_NotFound() {
-        Long orderId = 12345L;
-        given(memberCouponRepository.findByOrderId(orderId)).willReturn(Optional.empty());
+        String orderNumber = "12345L";
+        given(memberCouponRepository.findByOrderNumber(orderNumber)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> memberCouponService.cancelMemberCoupon(orderId))
+        assertThatThrownBy(() -> memberCouponService.cancelMemberCoupon(orderNumber))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 

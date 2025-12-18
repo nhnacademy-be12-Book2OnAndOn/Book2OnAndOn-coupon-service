@@ -15,10 +15,10 @@ public interface MemberCouponService {
     Page<MemberCouponResponseDto> getMyCoupon(Long userId, Pageable pageable, String status);
 
     //쿠폰 사용
-    void useMemberCoupon(Long memberCouponId, Long userId, Long orderId);
+    void useMemberCoupon(Long memberCouponId, Long userId, String orderNumber);
 
     //쿠폰 사용 취소
-    void cancelMemberCoupon(Long orderId);
+    void cancelMemberCoupon(String orderNumber);
 
     List<MemberCouponResponseDto> getUsableCoupons(Long userId, OrderCouponCheckRequestDto requestDto);
 

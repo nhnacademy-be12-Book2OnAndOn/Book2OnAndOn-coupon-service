@@ -37,7 +37,7 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
             Pageable pageable
     );
 
-    Optional<MemberCoupon> findByOrderId(Long orderId);
+    Optional<MemberCoupon> findByOrderNumber(String orderNumber);
 
     //BulkUpdate
     //만료된 쿠폰 전체 만료처리

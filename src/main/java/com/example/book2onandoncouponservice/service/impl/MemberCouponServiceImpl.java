@@ -56,8 +56,8 @@ public class MemberCouponServiceImpl implements MemberCouponService {
 
     @Transactional
     @Override
-    public void useMemberCoupon(Long memberCouponId, Long userId, Long orderId) {
-        log.info("쿠폰 사용 요청. memberCouponId={}, userId={}, orderId={}", memberCouponId, userId, orderId);
+    public void useMemberCoupon(Long memberCouponId, Long userId, String orderNumber) {
+        log.info("쿠폰 사용 요청. memberCouponId={}, userId={}, orderNumber={}", memberCouponId, userId, orderNumber);
 
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
                 .orElseThrow(() -> {
@@ -70,29 +70,30 @@ public class MemberCouponServiceImpl implements MemberCouponService {
             throw new CouponIssueException(CouponErrorCode.NOT_COUPON_OWNER);
         }
 
-        memberCoupon.use(orderId);
-        log.info("쿠폰 사용 : orderId: {}, couponId: {}", orderId, memberCoupon.getMemberCouponId());
+        memberCoupon.use(orderNumber);
+        log.info("쿠폰 사용 : orderNumber: {}, couponId: {}", orderNumber, memberCoupon.getMemberCouponId());
     }
 
     @Transactional
     @Override
-    public void cancelMemberCoupon(Long orderId) {
+    public void cancelMemberCoupon(String orderNumber) {
 
-        log.info("쿠폰 사용 취소(롤백) 요청. orderId={}", orderId);
+        log.info("쿠폰 사용 취소(롤백) 요청. orderNumber={}", orderNumber);
 
-        MemberCoupon memberCoupon = memberCouponRepository.findByOrderId(orderId)
+        MemberCoupon memberCoupon = memberCouponRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> {
-                    log.warn("쿠폰 취소 실패: 해당 주문에 사용된 쿠폰 없음. orderId={}", orderId);
+                    log.warn("쿠폰 취소 실패: 해당 주문에 사용된 쿠폰 없음. orderNumber={}", orderNumber);
                     return new CouponNotFoundException();
                 });
 
-        if (memberCoupon.getOrderId() != null && !memberCoupon.getOrderId().equals(orderId)) {
-            log.warn("쿠폰 취소 실패: 주문 번호 불일치. reqOrderId={}, couponOrderId={}", orderId, memberCoupon.getOrderId());
+        if (memberCoupon.getOrderNumber() != null && !memberCoupon.getOrderNumber().equals(orderNumber)) {
+            log.warn("쿠폰 취소 실패: 주문 번호 불일치. reqorderNumber={}, couponOrderNumber={}", orderNumber,
+                    memberCoupon.getOrderNumber());
             throw new CouponIssueException(CouponErrorCode.INVALID_COUPON_ORDER_MATCH);
         }
 
         memberCoupon.cancelUsage();
-        log.info("주문 취소로 인한 쿠폰 복구 완료: orderId={}, couponId={}", orderId, memberCoupon.getMemberCouponId());
+        log.info("주문 취소로 인한 쿠폰 복구 완료: orderNumber={}, couponId={}", orderNumber, memberCoupon.getMemberCouponId());
     }
 
 
