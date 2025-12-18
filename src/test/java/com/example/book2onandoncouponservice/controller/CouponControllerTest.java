@@ -73,7 +73,6 @@ class CouponControllerTest {
     void getAppliableCoupons_Success() throws Exception {
         // given
         Long bookId = 100L;
-        List<Long> categoryIds = List.of(1L, 2L);
 
         given(couponService.getAppliableCoupons(eq(bookId), anyList()))
                 .willReturn(List.of());
