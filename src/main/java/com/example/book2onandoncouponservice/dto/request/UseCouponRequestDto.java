@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 public class UseCouponRequestDto {
 
     @NotNull(message = "주문번호는 필수입니다.")
-    private Long orderId;
+    private String orderNumber;
 }

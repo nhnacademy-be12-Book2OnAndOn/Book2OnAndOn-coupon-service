@@ -19,11 +19,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
-@TestPropertySource(properties = {"dooray.url=http://localhost"})
+@ActiveProfiles("test")
 class MemberCouponRepositoryTest {
 
     @Autowired
@@ -53,7 +53,7 @@ class MemberCouponRepositoryTest {
         return entityManager.persist(c);
     }
 
-    private MemberCoupon createMemberCoupon(Long userId, Coupon coupon, MemberCouponStatus status, Long orderId) {
+    private MemberCoupon createMemberCoupon(Long userId, Coupon coupon, MemberCouponStatus status, String orderNumber) {
         // 기본적으로 유효기간이 30일 남은 쿠폰 생성
         MemberCoupon.MemberCouponBuilder builder = MemberCoupon.builder()
                 .userId(userId)
@@ -66,7 +66,7 @@ class MemberCouponRepositoryTest {
 
         // 상태 변경 (비즈니스 메서드 사용)
         if (status == MemberCouponStatus.USED) {
-            mc.use(orderId);
+            mc.use(orderNumber);
         } else if (status == MemberCouponStatus.EXPIRED) {
             // 만료 처리 (메서드가 없으면 Reflection 사용)
             ReflectionTestUtils.setField(mc, "memberCouponStatus", MemberCouponStatus.EXPIRED);
@@ -92,7 +92,7 @@ class MemberCouponRepositoryTest {
         Coupon c3 = createCoupon(p3);
 
         createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
-        createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L); // 사용된 쿠폰
+        createMemberCoupon(userId, c2, MemberCouponStatus.USED, "100L"); // 사용된 쿠폰
         createMemberCoupon(2L, c3, MemberCouponStatus.NOT_USED, null); // 다른 유저
 
         entityManager.flush();
@@ -119,7 +119,7 @@ class MemberCouponRepositoryTest {
         Coupon c2 = createCoupon(p2);
 
         createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
-        createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L);
+        createMemberCoupon(userId, c2, MemberCouponStatus.USED, "100L");
 
         entityManager.flush();
         entityManager.clear();
@@ -153,21 +153,21 @@ class MemberCouponRepositoryTest {
 
     @Test
     @DisplayName("주문 ID로 사용된 쿠폰 찾기")
-    void findByOrderId_Test() {
+    void findByorderNumber_Test() {
         // given
         Long userId = 1L;
-        Long orderId = 12345L;
+        String orderNumber = "12345L";
         CouponPolicy p = createPolicy("Policy");
         Coupon c = createCoupon(p);
 
-        createMemberCoupon(userId, c, MemberCouponStatus.USED, orderId);
+        createMemberCoupon(userId, c, MemberCouponStatus.USED, orderNumber);
 
         entityManager.flush();
         entityManager.clear();
 
         // when
-        Optional<MemberCoupon> result = memberCouponRepository.findByOrderId(orderId);
-        Optional<MemberCoupon> notFound = memberCouponRepository.findByOrderId(99999L);
+        Optional<MemberCoupon> result = memberCouponRepository.findByOrderNumber(orderNumber);
+        Optional<MemberCoupon> notFound = memberCouponRepository.findByOrderNumber("99999L");
 
         // then
         assertThat(result).isPresent();
@@ -196,7 +196,7 @@ class MemberCouponRepositoryTest {
 
         MemberCoupon validMc = createMemberCoupon(userId, c1, MemberCouponStatus.NOT_USED, null);
 
-        createMemberCoupon(userId, c2, MemberCouponStatus.USED, 100L);
+        createMemberCoupon(userId, c2, MemberCouponStatus.USED, "100L");
 
         createMemberCoupon(userId, c3, MemberCouponStatus.NOT_USED, null);
 

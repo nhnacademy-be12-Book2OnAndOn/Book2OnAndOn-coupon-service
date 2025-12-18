@@ -16,15 +16,15 @@ public class CouponCancelListener {
     private final MemberCouponService memberCouponService;
 
     @RabbitListener(queues = RabbitConfig.QUEUE_CANCEL)
-    public void receive(Long orderId) {
+    public void receive(String orderNumber) {
 
         try {
-            log.info("쿠폰 롤백 시도 -> orderId: {}", orderId);
-            memberCouponService.cancelMemberCoupon(orderId);
+            log.info("쿠폰 롤백 시도 -> orderNumber: {}", orderNumber);
+            memberCouponService.cancelMemberCoupon(orderNumber);
         } catch (CouponIssueException | CouponNotFoundException e) {
             log.info("발급 불가(비즈니스 예외) 재시도 하지 않음. reason:{}", e.getMessage());
         } catch (Exception e) {
-            log.error("쿠폰 롤백 실패 orderId: {}", orderId);
+            log.error("쿠폰 롤백 실패 orderNumber: {}", orderNumber);
             throw e;
         }
     }

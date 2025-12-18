@@ -29,36 +29,36 @@ class CouponCancelListenerTest {
     @DisplayName("쿠폰 취소(롤백) 성공")
     void receive_Success() {
         // given
-        Long orderId = 100L;
+        String orderNumber = "100L";
 
         // when
-        couponCancelListener.receive(orderId);
+        couponCancelListener.receive(orderNumber);
 
         // then
-        verify(memberCouponService, times(1)).cancelMemberCoupon(orderId);
+        verify(memberCouponService, times(1)).cancelMemberCoupon(orderNumber);
     }
 
     @Test
     @DisplayName("비즈니스 예외 발생 시 예외 무시 (CouponNotFoundException)")
     void receive_BusinessException() {
         // given
-        Long orderId = 100L;
+        String orderNumber = "100L";
         doThrow(new CouponNotFoundException())
-                .when(memberCouponService).cancelMemberCoupon(orderId);
+                .when(memberCouponService).cancelMemberCoupon(orderNumber);
 
         // when & then
-        assertDoesNotThrow(() -> couponCancelListener.receive(orderId));
+        assertDoesNotThrow(() -> couponCancelListener.receive(orderNumber));
     }
 
     @Test
     @DisplayName("시스템 예외 발생 시 예외 던짐")
     void receive_SystemException() {
         // given
-        Long orderId = 100L;
+        String orderNumber = "100L";
         doThrow(new RuntimeException("시스템 에러"))
-                .when(memberCouponService).cancelMemberCoupon(orderId);
+                .when(memberCouponService).cancelMemberCoupon(orderNumber);
 
         // when & then
-        assertThrows(RuntimeException.class, () -> couponCancelListener.receive(orderId));
+        assertThrows(RuntimeException.class, () -> couponCancelListener.receive(orderNumber));
     }
 }
