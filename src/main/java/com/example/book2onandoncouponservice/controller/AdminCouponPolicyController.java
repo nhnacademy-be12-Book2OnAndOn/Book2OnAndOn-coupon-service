@@ -27,8 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/admin/coupon-policies")
-public class CouponPolicyController {
+@RequestMapping("/admin/coupon-policies") // 공통 경로 설정
+public class AdminCouponPolicyController {
+
     private final CouponPolicyService couponPolicyService;
 
     @GetMapping
@@ -40,16 +41,14 @@ public class CouponPolicyController {
 
         Page<CouponPolicyResponseDto> policies = couponPolicyService.getCouponPolicies(type, discountType, status,
                 pageable);
-
         return ResponseEntity.ok(policies);
     }
 
-    @GetMapping("/{couponPolicyId}")
+    @GetMapping("/{coupon-policy-id}")
     public ResponseEntity<CouponPolicyResponseDto> getPolicy(
-            @PathVariable("couponPolicyId") Long couponPolicyId) {
+            @PathVariable("coupon-policy-id") Long couponPolicyId) {
 
         CouponPolicyResponseDto responseDto = couponPolicyService.getCouponPolicy(couponPolicyId);
-
         return ResponseEntity.ok(responseDto);
     }
 
@@ -63,9 +62,9 @@ public class CouponPolicyController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/{couponPolicyId}")
+    @PutMapping("/{coupon-policy-id}")
     public ResponseEntity<Void> updatePolicy(
-            @PathVariable Long couponPolicyId,
+            @PathVariable("coupon-policy-id") Long couponPolicyId,
             @Valid @RequestBody CouponPolicyUpdateRequestDto requestDto) {
 
         couponPolicyService.updatePolicy(couponPolicyId, requestDto);
@@ -74,9 +73,9 @@ public class CouponPolicyController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{couponPolicyId}")
+    @DeleteMapping("/{coupon-policy-id}")
     public ResponseEntity<Void> deactivatePolicy(
-            @PathVariable Long couponPolicyId) {
+            @PathVariable("coupon-policy-id") Long couponPolicyId) {
 
         couponPolicyService.deactivatePolicy(couponPolicyId);
         log.warn("쿠폰정책 비활성화 완료: {}", couponPolicyId);

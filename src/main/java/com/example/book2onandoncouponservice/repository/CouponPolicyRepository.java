@@ -39,7 +39,7 @@ public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, Long
             "   (tb.bookId IN :bookIds) OR " +           // 도서 일치
             "   (tc.categoryId IN :categoryIds) OR " +   // 카테고리 일치
             "   (SIZE(p.couponPolicyTargetBooks) = 0 AND SIZE(p.couponPolicyTargetCategories) = 0)")
-    // 제약 조건이 없는 쿠폰
+    // 제약 조건이 없는 쿠 폰
     List<Long> findApplicablePolicyIds(@Param("bookIds") List<Long> bookIds,
                                        @Param("categoryIds") List<Long> categoryIds);
 }

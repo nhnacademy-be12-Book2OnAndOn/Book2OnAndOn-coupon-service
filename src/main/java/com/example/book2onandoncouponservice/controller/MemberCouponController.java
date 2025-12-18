@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberCouponController {
     private final MemberCouponService memberCouponService;
 
-    @PostMapping("/{memberCouponId}/use")
-    public ResponseEntity<Void> useCoupon(@PathVariable Long memberCouponId,
+    @PostMapping("/{member-coupon-id}/use")
+    public ResponseEntity<Void> useCoupon(@PathVariable("member-coupon-id") Long memberCouponId,
                                           @RequestHeader("X-USER-ID") Long userId,
                                           @RequestBody UseCouponRequestDto requestDto) {
         memberCouponService.useMemberCoupon(memberCouponId, userId, requestDto.getOrderId());
@@ -45,6 +45,7 @@ public class MemberCouponController {
         return ResponseEntity.ok(coupons);
     }
 
+    //주문 사용 가능용
     @PostMapping("/usable")
     public ResponseEntity<List<MemberCouponResponseDto>> getUsableCoupons(
             @RequestHeader("X-USER-ID") Long userId,
@@ -57,9 +58,9 @@ public class MemberCouponController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{memberCouponId}/targets")
+    @GetMapping("/{member-coupon-id}/targets")
     public ResponseEntity<CouponTargetResponseDto> getCouponTargets(
-            @PathVariable("memberCouponId") Long memberCouponId) {
+            @PathVariable("member-coupon-id") Long memberCouponId) {
 
         CouponTargetResponseDto response = memberCouponService.getCouponTargets(memberCouponId);
 

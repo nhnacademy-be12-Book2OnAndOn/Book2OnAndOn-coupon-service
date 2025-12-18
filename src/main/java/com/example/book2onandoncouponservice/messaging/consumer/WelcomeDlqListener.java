@@ -12,24 +12,25 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CouponCancelDlqListener {
+public class WelcomeDlqListener {
     private final RabbitTemplate rabbitTemplate;
     private final DlqErrorHandler dlqErrorHandler;
 
-    @RabbitListener(queues = RabbitConfig.QUEUE_CANCEL_DLQ)
-    public void cancelCouponDlq(Message message) {
+    @RabbitListener(queues = RabbitConfig.QUEUE_WELCOME_DLQ)
+    public void welcomeDlq(Message message) {
 
         try {
             String reason = dlqErrorHandler.getErrorReason(message);
 
-            Long orderId = (Long) rabbitTemplate.getMessageConverter().fromMessage(message);
+            Object payload = rabbitTemplate.getMessageConverter().fromMessage(message);
+            Long userId = (Long) payload;
 
-            log.error("취소 롤백 최종 실패. 알림 발송. orderId={}, reason={}", orderId, reason);
-            String text = "[긴급] 쿠폰 롤백 실패 (DLQ)";
-            dlqErrorHandler.sendDoorayAlert(text, String.valueOf(orderId), reason);
+            log.error("알림 발송 대상 userId={}, reason={}", userId, reason);
+            String text = "[긴급] 웰컴쿠폰 발급 실패 (DLQ)";
+            dlqErrorHandler.sendDoorayAlert(text, String.valueOf(userId), reason);
 
         } catch (Exception e) {
-            log.error("Cancel DLQ 처리 중 예외 발생", e);
+            log.error("Welcome Coupon DLQ 처리 중 예외 발생", e);
         }
     }
 }
