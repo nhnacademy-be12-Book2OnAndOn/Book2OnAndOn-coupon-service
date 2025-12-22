@@ -31,41 +31,43 @@ public class CouponResponseDto {
 
     private Integer couponRemainingQuantity;  // 남은 재고(null = 무제한)
 
+    //특정 사용자 쿠폰 보유 여부
+    private Boolean isIssued;
+
     // Entity -> DTO 변환
     public CouponResponseDto(Coupon coupon) {
         CouponPolicy policy = coupon.getCouponPolicy();
 
-        // 할인 설명
-        String discountDescription;
-        if (policy.getCouponPolicyDiscountType() == CouponPolicyDiscountType.FIXED) {
-            discountDescription = String.format("%,d원 할인", policy.getCouponDiscountValue());
+        this.discountType = policy.getCouponPolicyDiscountType();
+
+        if (this.discountType == CouponPolicyDiscountType.FIXED) {
+            this.discountDescription = String.format("%,d원 할인", policy.getCouponDiscountValue());
+            this.maxPrice = null;
         } else {
-            discountDescription = String.format("%d%% 할인", policy.getCouponDiscountValue());
+            this.discountDescription = String.format("%d%% 할인", policy.getCouponDiscountValue());
+            this.maxPrice = policy.getMaxPrice();
         }
 
         this.couponId = coupon.getCouponId();
         this.couponName = policy.getCouponPolicyName();
-        this.discountDescription = discountDescription;
         this.discountValue = policy.getCouponDiscountValue();
-        this.discountType = policy.getCouponPolicyDiscountType();
         this.minPrice = policy.getMinPrice();
-        this.maxPrice = policy.getMaxPrice();
         this.status = policy.getCouponPolicyStatus();
 
-        // 상대 유효기간 vs 절대 유효기간
-        this.durationDays = policy.getDurationDays(); // null이면 상대 기간 없음
-
-        if (policy.getCouponPolicyDiscountType() == CouponPolicyDiscountType.FIXED) {
-            // 절대 유효기간
+        if (policy.getFixedStartDate() != null && policy.getFixedEndDate() != null) {
             this.startDate = policy.getFixedStartDate();
             this.endDate = policy.getFixedEndDate();
+            this.durationDays = null;
         } else {
-            // 상대 기간 쿠폰이면 절대 날짜 없음
             this.startDate = null;
             this.endDate = null;
+            this.durationDays = policy.getDurationDays();
         }
 
-        // 재고 기반 구조: 남은 재고(remainingQuantity)
         this.couponRemainingQuantity = coupon.getCouponRemainingQuantity();
+    }
+
+    public void setIsIssued() {
+        this.isIssued = true;
     }
 }
