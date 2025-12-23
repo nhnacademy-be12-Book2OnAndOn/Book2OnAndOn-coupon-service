@@ -70,18 +70,19 @@ class CouponControllerTest {
 
     @Test
     @DisplayName("도서 상세페이지 적용(발급) 가능 쿠폰 조회 - 성공")
-    void getAppliableCoupons_Success() throws Exception {
+    void getIssuableCoupons_Success() throws Exception {
         // given
         Long bookId = 100L;
-        List<Long> categoryIds = List.of(1L, 2L);
+        Long userId = 1L; // 로그인한 사용자 가정
 
-        given(couponService.getAppliableCoupons(eq(bookId), anyList()))
+        given(couponService.getIssuableCoupons(eq(userId), eq(bookId), anyList()))
                 .willReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/coupons/issuable")
+                        .header("X-USER-ID", userId) // 헤더 추가
                         .param("bookId", String.valueOf(bookId))
-                        .param("categoryIds", "1", "2")) // List 파라미터 전달 방식
+                        .param("categoryIds", "1", "2"))
                 .andExpect(status().isOk())
                 .andDo(print());
     }

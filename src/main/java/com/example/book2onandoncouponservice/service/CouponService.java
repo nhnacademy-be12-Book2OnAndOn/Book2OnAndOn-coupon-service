@@ -35,5 +35,5 @@ public interface CouponService {
 
     //적용가능한 쿠폰 확인
     @Transactional(readOnly = true)
-    List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds);
+    List<CouponResponseDto> getIssuableCoupons(Long userId, Long bookId, List<Long> categoryIds);
 }

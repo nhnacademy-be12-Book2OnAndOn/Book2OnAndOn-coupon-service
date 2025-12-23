@@ -46,11 +46,12 @@ public class CouponController {
     }
 
     @GetMapping("/issuable")
-    public ResponseEntity<List<CouponResponseDto>> getAppliableCoupons(
+    public ResponseEntity<List<CouponResponseDto>> getIssuableCoupons(
+            @RequestHeader(value = "X-USER-ID", required = false) Long userId,
             @RequestParam Long bookId,
             @RequestParam List<Long> categoryIds) {
 
-        return ResponseEntity.ok(couponService.getAppliableCoupons(bookId, categoryIds));
+        return ResponseEntity.ok(couponService.getIssuableCoupons(userId, bookId, categoryIds));
     }
 
     @PostMapping("/{coupon-id}")
