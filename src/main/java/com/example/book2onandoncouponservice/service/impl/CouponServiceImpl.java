@@ -17,7 +17,10 @@ import com.example.book2onandoncouponservice.repository.MemberCouponRepository;
 import com.example.book2onandoncouponservice.service.CouponService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -250,25 +253,38 @@ public class CouponServiceImpl implements CouponService {
     //적용가능한 쿠폰 확인 (쿠폰 다운로드용)
     @Transactional(readOnly = true)
     @Override
-    public List<CouponResponseDto> getAppliableCoupons(Long bookId, List<Long> categoryIds) {
+    public List<CouponResponseDto> getIssuableCoupons(Long userId, Long bookId, List<Long> categoryIds) {
         log.debug("상품 적용 가능 쿠폰 조회 요청. bookId={}, categoryIds={}", bookId, categoryIds);
 
         List<Coupon> coupons = couponRepository.findAppliableCoupons(bookId, categoryIds);
 
-        List<CouponResponseDto> result = coupons.stream()
-                .filter(coupon -> {
-                    CouponPolicy couponPolicy = coupon.getCouponPolicy();
+        Set<Long> myCouponIds;
 
+        if (userId != null) {
+            List<Long> ids = memberCouponRepository.findAllCouponIdsByUserId(userId);
+            myCouponIds = new HashSet<>(ids);
+        } else {
+            myCouponIds = Collections.emptySet();
+        }
+
+        return coupons.stream()
+                .filter(coupon -> {
+                    CouponPolicy policy = coupon.getCouponPolicy();
                     boolean isStockAvailable =
                             coupon.getCouponRemainingQuantity() == null || coupon.getCouponRemainingQuantity() > 0;
-                    boolean policyIssuable = couponPolicy.isIssuable();
-
+                    boolean policyIssuable = policy.isIssuable();
                     return isStockAvailable && policyIssuable;
-                }).map(CouponResponseDto::new)
-                .collect(Collectors.toList());
+                })
+                .map(coupon -> {
+                    CouponResponseDto dto = new CouponResponseDto(coupon);
 
-        log.info("상품 적용 가능 쿠폰 조회 완료. foundCount={}", result.size());
-        return result;
+                    if (myCouponIds.contains(coupon.getCouponId())) {
+                        dto.setIsIssued();
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
 

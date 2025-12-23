@@ -15,6 +15,7 @@ import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
 import com.example.book2onandoncouponservice.dto.response.CouponResponseDto;
 import com.example.book2onandoncouponservice.entity.Coupon;
 import com.example.book2onandoncouponservice.entity.CouponPolicy;
+import com.example.book2onandoncouponservice.entity.CouponPolicyDiscountType;
 import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import com.example.book2onandoncouponservice.entity.MemberCoupon;
@@ -221,10 +222,8 @@ class CouponServiceTest {
         verify(couponRepository).findAllByPolicyStatus(null, pageable);
     }
 
-    // ==========================================
-    // 3. getCouponDetail (상세 조회)
-    // ==========================================
 
+    // getCouponDetail (상세 조회)
     @Test
     @DisplayName("쿠폰 상세 조회 성공")
     void getCouponDetail_Success() {
@@ -251,9 +250,7 @@ class CouponServiceTest {
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
-    // ==========================================
-    // 4. getAvailableCoupon (사용자용 조회)
-    // ==========================================
+    // getAvailableCoupon (사용자용 조회)
 
     @Test
     @DisplayName("발급 가능 쿠폰 목록 조회 성공")
@@ -271,10 +268,7 @@ class CouponServiceTest {
         assertThat(result.getContent()).hasSize(1);
     }
 
-    // ==========================================
-    // 5. issueMemberCoupon (발급 로직) - 만료일 계산 분기 포함
-    // ==========================================
-
+    // issueMemberCoupon (발급 로직) - 만료일 계산 분기 포함
     private void setupIssueMock(Long userId, Long couponId, Coupon coupon, CouponPolicy policy) {
         given(couponRepository.findByIdForUpdate(couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
@@ -392,10 +386,7 @@ class CouponServiceTest {
                 .hasMessage(CouponErrorCode.COUPON_ALREADY_ISSUED.getMessage());
     }
 
-    // ==========================================
-    // 6. updateAccount (수량 수정)
-    // ==========================================
-
+    // updateAccount (수량 수정)
     @Test
     @DisplayName("쿠폰 수량 수정 성공 & Redis 업데이트")
     void updateAccount_Success() {
@@ -534,9 +525,7 @@ class CouponServiceTest {
                 .hasMessage(CouponErrorCode.COUPON_ALREADY_ISSUED.getMessage());
     }
 
-    // ==========================================
-    // 8. issueBirthdayCoupon (생일 쿠폰)
-    // ==========================================
+    // issueBirthdayCoupon (생일 쿠폰)
 
     @Test
     @DisplayName("생일 쿠폰 발급 성공")
@@ -609,79 +598,116 @@ class CouponServiceTest {
 
     @Test
     @DisplayName("적용 가능 쿠폰 조회 성공")
-    void getAppliableCoupons_Success() {
+    void getIssuableCoupons_Success() { // 메서드명 변경
+        // given
+        Long userId = 1L; // 회원 ID 추가
         Long bookId = 100L;
         List<Long> categories = List.of(1L);
 
+        // 1. Policy Mock (DTO 생성에 필요한 필드 추가 Stubbing)
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.isIssuable()).willReturn(true);
+        given(policy.getCouponPolicyName()).willReturn("테스트 쿠폰");
+        given(policy.getCouponPolicyDiscountType()).willReturn(CouponPolicyDiscountType.FIXED);
+        given(policy.getCouponDiscountValue()).willReturn(1000);
+        given(policy.getCouponPolicyStatus()).willReturn(CouponPolicyStatus.ACTIVE);
 
+        // 2. Coupon Mock
         Coupon coupon = mock(Coupon.class);
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(coupon.getCouponRemainingQuantity()).willReturn(10); // 재고 있음
+        given(coupon.getCouponId()).willReturn(1L); // [중요] 서비스 로직에서 ID를 비교하므로 설정 필요
 
+        // 3. Repository Mock
+        // (1) 적용 가능 쿠폰 목록 조회
         given(couponRepository.findAppliableCoupons(bookId, categories)).willReturn(List.of(coupon));
 
-        List<CouponResponseDto> result = couponService.getAppliableCoupons(bookId, categories);
+        // (2) [추가] 유저가 보유한 쿠폰 ID 목록 조회 (회원인 경우 호출됨)
+        given(memberCouponRepository.findAllCouponIdsByUserId(userId)).willReturn(List.of());
 
+        // when
+        // 파라미터에 userId 추가
+        List<CouponResponseDto> result = couponService.getIssuableCoupons(userId, bookId, categories);
+
+        // then
         assertThat(result).hasSize(1);
     }
 
     @Test
     @DisplayName("적용 가능 쿠폰 조회 - 재고 없으면 제외")
-    void getAppliableCoupons_FilteredByStock() {
+    void getIssuableCoupons_FilteredByStock() { // 메소드명 변경
         Long bookId = 100L;
 
+        // Policy Mock
         CouponPolicy policy = mock(CouponPolicy.class);
-        // 정책은 발급 가능 상태라도 재고가 0이면 제외
-        given(policy.isIssuable()).willReturn(true);
+        given(policy.isIssuable()).willReturn(true); // 정책은 발급 가능 상태
 
+        // Coupon Mock
         Coupon coupon = mock(Coupon.class);
         given(coupon.getCouponPolicy()).willReturn(policy);
-        given(coupon.getCouponRemainingQuantity()).willReturn(0); // 재고 0
+        given(coupon.getCouponRemainingQuantity()).willReturn(0); // 재고 0 설정
 
+        // Repository Mock
         given(couponRepository.findAppliableCoupons(any(), any())).willReturn(List.of(coupon));
 
-        List<CouponResponseDto> result = couponService.getAppliableCoupons(bookId, List.of());
+        // when: userId는 null (비회원)로 설정하여 호출
+        List<CouponResponseDto> result = couponService.getIssuableCoupons(null, bookId, List.of());
 
+        // then
         assertThat(result).isEmpty();
     }
 
     @Test
     @DisplayName("적용 가능 쿠폰 조회 - 정책 불가면 제외")
-    void getAppliableCoupons_FilteredByPolicy() {
+    void getIssuableCoupons_FilteredByPolicy() { // 메서드명 변경
         Long bookId = 100L;
 
+        // Policy Mock
         CouponPolicy policy = mock(CouponPolicy.class);
-        given(policy.isIssuable()).willReturn(false); // 정책 발급 불가
+        given(policy.isIssuable()).willReturn(false); // 발급 불가 설정
 
+        // Coupon Mock
         Coupon coupon = mock(Coupon.class);
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(coupon.getCouponRemainingQuantity()).willReturn(100);
 
+        // Repository Mock
         given(couponRepository.findAppliableCoupons(any(), any())).willReturn(List.of(coupon));
 
-        List<CouponResponseDto> result = couponService.getAppliableCoupons(bookId, List.of());
+        // when: userId를 null로 주어 비회원 상태로 조회 (MemberCouponRepository 호출 안함)
+        List<CouponResponseDto> result = couponService.getIssuableCoupons(null, bookId, List.of());
 
+        // then
         assertThat(result).isEmpty();
     }
 
     @Test
     @DisplayName("적용 가능 쿠폰 조회 - 재고가 NULL(무제한)이면 포함")
-    void getAppliableCoupons_UnlimitedStock() {
+    void getIssuableCoupons_UnlimitedStock() { // 메서드명 변경
         Long bookId = 100L;
 
+        // Policy Mock
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.isIssuable()).willReturn(true);
+        // DTO 생성 시 필요한 값들이 있다면 추가 Stubbing 필요 (예: policy.getName() 등)
+        // given(policy.getCouponPolicyName()).willReturn("Test Coupon");
+        // given(policy.getCouponDiscountValue()).willReturn(1000);
+        // given(policy.getCouponPolicyDiscountType()).willReturn(CouponPolicyDiscountType.FIXED);
 
+        // Coupon Mock
         Coupon coupon = mock(Coupon.class);
         given(coupon.getCouponPolicy()).willReturn(policy);
-        given(coupon.getCouponRemainingQuantity()).willReturn(null); // 무제한
+        given(coupon.getCouponRemainingQuantity()).willReturn(null); // 무제한 재고
+        given(coupon.getCouponId()).willReturn(1L); // DTO 생성 및 ID 비교 로직을 위해 ID 설정
 
+        // Repository Mock
         given(couponRepository.findAppliableCoupons(any(), any())).willReturn(List.of(coupon));
 
-        List<CouponResponseDto> result = couponService.getAppliableCoupons(bookId, List.of());
+        // when: userId null (비회원)
+        List<CouponResponseDto> result = couponService.getIssuableCoupons(null, bookId, List.of());
 
+        // then
         assertThat(result).hasSize(1);
     }
+
 }
