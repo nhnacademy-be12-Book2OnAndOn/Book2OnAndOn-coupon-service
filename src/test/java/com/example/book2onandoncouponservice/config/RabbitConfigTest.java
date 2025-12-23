@@ -43,9 +43,10 @@ class RabbitConfigTest {
         // Queue
         Queue queue = rabbitConfig.welcomeQueue();
         assertThat(queue.getName()).isEqualTo(RabbitConfig.QUEUE_WELCOME);
-        assertThat(queue.getArguments().get("x-dead-letter-exchange")).isEqualTo(RabbitConfig.DLX_EXCHANGE);
-        assertThat(queue.getArguments().get("x-dead-letter-routing-key")).isEqualTo(
-                RabbitConfig.DLX_ROUTING_KEY_WELCOME);
+
+        assertThat(queue.getArguments())
+                .containsEntry("x-dead-letter-exchange", RabbitConfig.DLX_EXCHANGE)
+                .containsEntry("x-dead-letter-routing-key", RabbitConfig.DLX_ROUTING_KEY_WELCOME);
 
         // Binding
         Binding binding = rabbitConfig.welcomeBinding();
@@ -67,20 +68,25 @@ class RabbitConfigTest {
     @Test
     @DisplayName("Birthday Queue 및 Binding 설정 확인")
     void birthdayConfiguration() {
+        // Queue
         Queue queue = rabbitConfig.birthdayQueue();
         assertThat(queue.getName()).isEqualTo(RabbitConfig.QUEUE_BIRTHDAY);
-        assertThat(queue.getArguments().get("x-dead-letter-exchange")).isEqualTo(RabbitConfig.DLX_EXCHANGE);
-        assertThat(queue.getArguments().get("x-dead-letter-routing-key")).isEqualTo(
-                RabbitConfig.DLX_ROUTING_KEY_BIRTHDAY);
+        
+        assertThat(queue.getArguments())
+                .containsEntry("x-dead-letter-exchange", RabbitConfig.DLX_EXCHANGE)
+                .containsEntry("x-dead-letter-routing-key", RabbitConfig.DLX_ROUTING_KEY_BIRTHDAY);
 
+        // Binding
         Binding binding = rabbitConfig.birthdayBinding();
         assertThat(binding.getDestination()).isEqualTo(RabbitConfig.QUEUE_BIRTHDAY);
         assertThat(binding.getExchange()).isEqualTo(RabbitConfig.USER_EXCHANGE);
         assertThat(binding.getRoutingKey()).isEqualTo(RabbitConfig.ROUTING_KEY_BIRTHDAY);
 
+        // DLQ
         Queue dlq = rabbitConfig.birthdayDlq();
         assertThat(dlq.getName()).isEqualTo(RabbitConfig.QUEUE_BIRTHDAY_DLQ);
 
+        // DLQ Binding
         Binding dlqBinding = rabbitConfig.birthdayDlqBinding();
         assertThat(dlqBinding.getDestination()).isEqualTo(RabbitConfig.QUEUE_BIRTHDAY_DLQ);
         assertThat(dlqBinding.getExchange()).isEqualTo(RabbitConfig.DLX_EXCHANGE);
@@ -90,20 +96,25 @@ class RabbitConfigTest {
     @Test
     @DisplayName("Cancel Queue 및 Binding 설정 확인")
     void cancelConfiguration() {
+        // Queue
         Queue queue = rabbitConfig.cancelQueue();
         assertThat(queue.getName()).isEqualTo(RabbitConfig.QUEUE_CANCEL);
-        assertThat(queue.getArguments().get("x-dead-letter-exchange")).isEqualTo(RabbitConfig.DLX_EXCHANGE);
-        assertThat(queue.getArguments().get("x-dead-letter-routing-key")).isEqualTo(
-                RabbitConfig.DLX_ROUTING_KEY_CANCEL);
 
+        assertThat(queue.getArguments())
+                .containsEntry("x-dead-letter-exchange", RabbitConfig.DLX_EXCHANGE)
+                .containsEntry("x-dead-letter-routing-key", RabbitConfig.DLX_ROUTING_KEY_CANCEL);
+
+        // Binding
         Binding binding = rabbitConfig.couponCancelBinding();
         assertThat(binding.getDestination()).isEqualTo(RabbitConfig.QUEUE_CANCEL);
         assertThat(binding.getExchange()).isEqualTo(RabbitConfig.ORDER_EXCHANGE);
         assertThat(binding.getRoutingKey()).isEqualTo(RabbitConfig.ROUTING_KEY_CANCEL);
 
+        // DLQ
         Queue dlq = rabbitConfig.cancelDlq();
         assertThat(dlq.getName()).isEqualTo(RabbitConfig.QUEUE_CANCEL_DLQ);
 
+        // DLQ Binding
         Binding dlqBinding = rabbitConfig.cancelDlqBinding();
         assertThat(dlqBinding.getDestination()).isEqualTo(RabbitConfig.QUEUE_CANCEL_DLQ);
         assertThat(dlqBinding.getExchange()).isEqualTo(RabbitConfig.DLX_EXCHANGE);
@@ -113,19 +124,25 @@ class RabbitConfigTest {
     @Test
     @DisplayName("Issue Queue 및 Binding 설정 확인")
     void issueConfiguration() {
+        // Queue
         Queue queue = rabbitConfig.issueQueue();
         assertThat(queue.getName()).isEqualTo(RabbitConfig.QUEUE_ISSUE);
-        assertThat(queue.getArguments().get("x-dead-letter-exchange")).isEqualTo(RabbitConfig.DLX_EXCHANGE);
-        assertThat(queue.getArguments().get("x-dead-letter-routing-key")).isEqualTo(RabbitConfig.DLX_ROUTING_KEY_ISSUE);
 
+        assertThat(queue.getArguments())
+                .containsEntry("x-dead-letter-exchange", RabbitConfig.DLX_EXCHANGE)
+                .containsEntry("x-dead-letter-routing-key", RabbitConfig.DLX_ROUTING_KEY_ISSUE);
+
+        // Binding
         Binding binding = rabbitConfig.couponIssueBinding();
         assertThat(binding.getDestination()).isEqualTo(RabbitConfig.QUEUE_ISSUE);
         assertThat(binding.getExchange()).isEqualTo(RabbitConfig.COUPON_EXCHANGE);
         assertThat(binding.getRoutingKey()).isEqualTo(RabbitConfig.ROUTING_KEY_ISSUE);
 
+        // DLQ
         Queue dlq = rabbitConfig.issueDlq();
         assertThat(dlq.getName()).isEqualTo(RabbitConfig.QUEUE_ISSUE_DLQ);
 
+        // DLQ Binding
         Binding dlqBinding = rabbitConfig.issueDlqBinding();
         assertThat(dlqBinding.getDestination()).isEqualTo(RabbitConfig.QUEUE_ISSUE_DLQ);
         assertThat(dlqBinding.getExchange()).isEqualTo(RabbitConfig.DLX_EXCHANGE);

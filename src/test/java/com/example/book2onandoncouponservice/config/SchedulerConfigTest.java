@@ -28,7 +28,8 @@ class SchedulerConfigTest {
         LockProvider lockProvider = schedulerConfig.lockProvider(redisConnectionFactory);
 
         // then
-        assertThat(lockProvider).isNotNull();
-        assertThat(lockProvider).isInstanceOf(RedisLockProvider.class);
+        assertThat(lockProvider)
+                .isNotNull()
+                .isInstanceOf(RedisLockProvider.class);
     }
 }

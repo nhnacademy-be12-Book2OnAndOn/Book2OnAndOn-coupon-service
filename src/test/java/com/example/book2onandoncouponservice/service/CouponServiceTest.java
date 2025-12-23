@@ -452,9 +452,7 @@ class CouponServiceTest {
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
-    // ==========================================
-    // 7. issueWelcomeCoupon (웰컴 쿠폰)
-    // ==========================================
+    // issueWelcomeCoupon (웰컴 쿠폰)
 
     @Test
     @DisplayName("웰컴 쿠폰 발급 성공")
@@ -689,10 +687,6 @@ class CouponServiceTest {
         // Policy Mock
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.isIssuable()).willReturn(true);
-        // DTO 생성 시 필요한 값들이 있다면 추가 Stubbing 필요 (예: policy.getName() 등)
-        // given(policy.getCouponPolicyName()).willReturn("Test Coupon");
-        // given(policy.getCouponDiscountValue()).willReturn(1000);
-        // given(policy.getCouponPolicyDiscountType()).willReturn(CouponPolicyDiscountType.FIXED);
 
         // Coupon Mock
         Coupon coupon = mock(Coupon.class);
