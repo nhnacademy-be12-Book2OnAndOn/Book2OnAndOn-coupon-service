@@ -15,11 +15,14 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
 @Slf4j
@@ -30,6 +33,12 @@ class CouponRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
+
+    @MockitoBean
+    private StringRedisTemplate redisTemplate; // Redis 의존성 가짜로 주입
+
+    @MockitoBean
+    private RabbitTemplate rabbitTemplate;
 
     // --- Helper Methods ---
 

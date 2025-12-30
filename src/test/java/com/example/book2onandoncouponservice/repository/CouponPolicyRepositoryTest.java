@@ -8,15 +8,18 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyStatus;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetBook;
 import com.example.book2onandoncouponservice.entity.CouponPolicyTargetCategory;
 import com.example.book2onandoncouponservice.entity.CouponPolicyType;
+import com.example.book2onandoncouponservice.service.CouponPolicyService;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
 class CouponPolicyRepositoryTest {
@@ -26,6 +29,12 @@ class CouponPolicyRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
+
+    @MockitoBean
+    private CouponPolicyService couponPolicyService;
+
+    @MockitoBean
+    private RabbitTemplate rabbitTemplate;
 
     private CouponPolicy savePolicy(String name, CouponPolicyType type,
                                     CouponPolicyDiscountType discountType,
