@@ -49,7 +49,7 @@ class CouponIssueServiceTest {
 
     private final Long userId = 1L;
     private final Long couponId = 100L;
-    private final String stockKey = "coupon:100:stock";
+    private final String stockKey = "coupon:100stock";
 
     private Coupon setupBaseCouponMock(Integer remainingQuantity, boolean isIssuable) {
         Coupon coupon = mock(Coupon.class);
