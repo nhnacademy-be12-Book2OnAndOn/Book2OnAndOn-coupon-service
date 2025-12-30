@@ -1,0 +1,46 @@
+spring:
+  # [수정] Config 서버 관련 설정 오류 해결
+  config:
+    import: "" # 빈 값으로 설정하여 ImportException 방지
+  cloud:
+    config:
+      enabled: false # 테스트 시 Config Server 연동 완전 차단
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # [수정] 계층 구조 최적화 (spring.data 아래에 redis가 위치해야 함)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # [수정] rabbitmq는 spring 바로 아래에 위치
+  rabbitmq:
+    host: localhost
+    port: 5672
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # 배치 자동 실행 방지
+  batch:
+    job:
+      enabled: false
+
+# 외부 API 관련 설정 (테스트 시 가짜 정보 유지)
+dooray:
+  url: https://nhnacademy.dooray.com/services
+  service:
+    id: "320437675857723423423"
+  bot:
+    id: "3241234582964633150785"
+    botToken: "dzfxzcfeqjR8WGUWsK3-XdIQ"
