@@ -312,15 +312,6 @@ class CouponServiceTest {
         assertThat(result.getContent()).hasSize(1);
     }
 
-    // issueMemberCoupon (발급 로직) - 만료일 계산 분기 포함
-    private void setupIssueMock(Long userId, Long couponId, Coupon coupon, CouponPolicy policy) {
-        given(couponRepository.findById
-                (couponId)).willReturn(Optional.of(coupon));
-        given(coupon.getCouponPolicy()).willReturn(policy);
-        given(policy.isIssuable()).willReturn(true);
-        given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(false);
-    }
-
     @Test
     @DisplayName("발급 성공 - FixedEndDate 만료일 계산")
     void issueMemberCoupon_Success_FixedDate() {
