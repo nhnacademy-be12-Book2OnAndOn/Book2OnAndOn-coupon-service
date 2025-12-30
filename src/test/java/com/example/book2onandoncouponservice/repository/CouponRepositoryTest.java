@@ -12,6 +12,7 @@ import com.example.book2onandoncouponservice.entity.CouponPolicyType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Slf4j
 class CouponRepositoryTest {
 
     @Autowired
@@ -192,7 +194,8 @@ class CouponRepositoryTest {
         entityManager.clear();
 
         // when
-        Optional<Coupon> found = couponRepository.findByIdForUpdate(coupon.getCouponId());
+        Optional<Coupon> found = couponRepository.findById
+                (coupon.getCouponId());
 
         // then
         // 단일 스레드 테스트라 락 동작을 직접 검증하긴 어렵지만, 쿼리 실행과 조회가 정상적인지 확인

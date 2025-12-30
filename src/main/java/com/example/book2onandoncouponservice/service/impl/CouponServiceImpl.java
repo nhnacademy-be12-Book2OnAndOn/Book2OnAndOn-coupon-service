@@ -130,7 +130,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Long issueMemberCoupon(Long userId, Long couponId) {
 
-        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+        Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> {
                             log.error("존재하지 않는 쿠폰. couponId={}", couponId);
                             return new CouponNotFoundException();
@@ -149,7 +149,14 @@ public class CouponServiceImpl implements CouponService {
             throw new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED);
         }
 
-        coupon.decreaseStock();
+        if (coupon.getCouponRemainingQuantity() != null) {
+            int updatedRows = couponRepository.decreaseRemainingQuantity(couponId);
+
+            if (updatedRows == 0) {
+                log.error("DB 재고 차감 실패 - 이미 소진됨. couponId={}", couponId);
+                throw new CouponIssueException(CouponErrorCode.COUPON_OUT_OF_STOCK);
+            }
+        }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endDate = calculateExpirationDate(policy, now);
