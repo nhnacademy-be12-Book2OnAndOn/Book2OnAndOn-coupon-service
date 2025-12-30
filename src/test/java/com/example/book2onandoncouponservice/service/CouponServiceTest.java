@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.example.book2onandoncouponservice.dto.request.CouponCreateRequestDto;
@@ -64,9 +65,17 @@ class CouponServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
-    // ==========================================
-    // 1. createCouponUnit (쿠폰 생성)
-    // ==========================================
+    private void setupIssueMock(Long userId, Long couponId, Coupon coupon, CouponPolicy policy, Integer quantity) {
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
+        given(coupon.getCouponPolicy()).willReturn(policy);
+        given(coupon.getCouponRemainingQuantity()).willReturn(quantity); // 수량 설정
+        given(policy.isIssuable()).willReturn(true);
+        given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(false);
+
+        if (quantity != null) {
+            given(couponRepository.decreaseRemainingQuantity(couponId)).willReturn(1);
+        }
+    }
 
     @Test
     @DisplayName("쿠폰 생성 성공 & Redis 동기화 로직 검증")
@@ -86,7 +95,6 @@ class CouponServiceTest {
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
 
-        // TransactionSynchronizationManager 모킹 및 내부 로직 캡처
         try (MockedStatic<TransactionSynchronizationManager> synchronizationManager = mockStatic(
                 TransactionSynchronizationManager.class)) {
 
@@ -97,25 +105,61 @@ class CouponServiceTest {
             assertThat(resultId).isEqualTo(10L);
             verify(couponRepository).save(any(Coupon.class));
 
-            // afterCommit 내부 로직 실행 검증
             ArgumentCaptor<TransactionSynchronization> captor = ArgumentCaptor.forClass(
                     TransactionSynchronization.class);
             synchronizationManager.verify(
                     () -> TransactionSynchronizationManager.registerSynchronization(captor.capture()));
 
-            // 캡처한 Synchronization의 afterCommit 실행 -> Redis 로직 수행됨
             captor.getValue().afterCommit();
             verify(valueOperations).set("coupon:10stock:", "1000");
         }
     }
 
     @Test
-    @DisplayName("쿠폰 생성 성공 - 무제한 수량(null)일 때 Redis 처리")
-    void createCouponUnit_Success_Unlimited() {
+    @DisplayName("쿠폰 생성 성공 - 유한 수량일 때 Redis 동기화 등록 및 실행 검증")
+    void createCouponUnit_Success_Limited_WithRedisSync() {
         // given
         Long policyId = 1L;
-        // 수량 null (무제한)
-        CouponCreateRequestDto req = new CouponCreateRequestDto(null, policyId);
+        CouponCreateRequestDto req = new CouponCreateRequestDto(100, policyId); // 수량 100
+
+        CouponPolicy policy = mock(CouponPolicy.class);
+        given(policy.getCouponPolicyStatus()).willReturn(CouponPolicyStatus.ACTIVE);
+        given(policyRepository.findById(policyId)).willReturn(Optional.of(policy));
+
+        Coupon savedCoupon = mock(Coupon.class);
+        given(savedCoupon.getCouponId()).willReturn(10L);
+        given(savedCoupon.getCouponRemainingQuantity()).willReturn(100);
+        given(couponRepository.save(any(Coupon.class))).willReturn(savedCoupon);
+
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+
+        try (MockedStatic<TransactionSynchronizationManager> synchronizationManager = mockStatic(
+                TransactionSynchronizationManager.class)) {
+
+            // when
+            couponService.createCouponUnit(req);
+
+            // then
+            ArgumentCaptor<TransactionSynchronization> captor = ArgumentCaptor.forClass(
+                    TransactionSynchronization.class);
+
+            // 동기화가 등록되었는지 확인
+            synchronizationManager.verify(
+                    () -> TransactionSynchronizationManager.registerSynchronization(captor.capture()));
+
+            // commit 후 Redis set 호출 확인
+            captor.getValue().afterCommit();
+
+            verify(valueOperations).set("coupon:10stock:", "100");
+        }
+    }
+
+    @Test
+    @DisplayName("쿠폰 생성 성공 - 무제한 수량(null)일 때 Redis 동기화 미등록 검증")
+    void createCouponUnit_Success_Unlimited_NoRedisSync() {
+        // given
+        Long policyId = 1L;
+        CouponCreateRequestDto req = new CouponCreateRequestDto(null, policyId); // 수량 null
 
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.getCouponPolicyStatus()).willReturn(CouponPolicyStatus.ACTIVE);
@@ -126,21 +170,25 @@ class CouponServiceTest {
         given(savedCoupon.getCouponRemainingQuantity()).willReturn(null); // 무제한
         given(couponRepository.save(any(Coupon.class))).willReturn(savedCoupon);
 
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
-
+        // static mock 시작
         try (MockedStatic<TransactionSynchronizationManager> synchronizationManager = mockStatic(
                 TransactionSynchronizationManager.class)) {
 
-            couponService.createCouponUnit(req);
+            // when
+            Long resultId = couponService.createCouponUnit(req);
 
-            ArgumentCaptor<TransactionSynchronization> captor = ArgumentCaptor.forClass(
-                    TransactionSynchronization.class);
+            // then
+            assertThat(resultId).isEqualTo(10L);
+            verify(couponRepository).save(any(Coupon.class));
+
             synchronizationManager.verify(
-                    () -> TransactionSynchronizationManager.registerSynchronization(captor.capture()));
+                    () -> TransactionSynchronizationManager.registerSynchronization(
+                            any(TransactionSynchronization.class)),
+                    never()
+            );
 
-            captor.getValue().afterCommit();
-            // Long.MAX_VALUE로 저장되는지 확인
-            verify(valueOperations).set("coupon:10stock:", String.valueOf(Long.MAX_VALUE));
+            // Redis 작업도 당연히 수행되지 않아야 함
+            verify(redisTemplate, never()).opsForValue();
         }
     }
 
@@ -170,10 +218,6 @@ class CouponServiceTest {
                 .isInstanceOf(CouponIssueException.class)
                 .hasMessage(CouponErrorCode.POLICY_NOT_ISSUABLE.getMessage());
     }
-
-    // ==========================================
-    // 2. getCoupons (목록 조회)
-    // ==========================================
 
     @Test
     @DisplayName("쿠폰 목록 조회 성공")
@@ -270,7 +314,8 @@ class CouponServiceTest {
 
     // issueMemberCoupon (발급 로직) - 만료일 계산 분기 포함
     private void setupIssueMock(Long userId, Long couponId, Coupon coupon, CouponPolicy policy) {
-        given(couponRepository.findByIdForUpdate(couponId)).willReturn(Optional.of(coupon));
+        given(couponRepository.findById
+                (couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(policy.isIssuable()).willReturn(true);
         given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(false);
@@ -279,11 +324,12 @@ class CouponServiceTest {
     @Test
     @DisplayName("발급 성공 - FixedEndDate 만료일 계산")
     void issueMemberCoupon_Success_FixedDate() {
+        // given
         Long userId = 1L, couponId = 1L;
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        setupIssueMock(userId, couponId, coupon, policy);
+        setupIssueMock(userId, couponId, coupon, policy, 100);
 
         // Fixed Date 설정
         LocalDate endDate = LocalDate.of(2025, 12, 31);
@@ -293,24 +339,30 @@ class CouponServiceTest {
         given(savedMC.getMemberCouponId()).willReturn(100L);
         given(memberCouponRepository.save(any(MemberCoupon.class))).willReturn(savedMC);
 
+        // when
         Long result = couponService.issueMemberCoupon(userId, couponId);
 
+        // then
         assertThat(result).isEqualTo(100L);
-        verify(coupon).decreaseStock();
-        // save 호출 시 만료일이 2025-12-31 23:59:59... 인지 확인 (ArgumentCaptor로 정밀 검증 가능하나 여기선 호출여부만)
+
+        // [수정] 더 이상 엔티티의 decreaseStock()을 호출하지 않으므로 삭제하거나 Repository 호출 검증으로 대체
+        verify(couponRepository).decreaseRemainingQuantity(couponId);
+
+        // save 호출 시 만료일이 포함된 MemberCoupon 객체가 저장되는지 확인
         verify(memberCouponRepository).save(any(MemberCoupon.class));
     }
 
     @Test
     @DisplayName("발급 성공 - DurationDays 만료일 계산")
     void issueMemberCoupon_Success_DurationDays() {
+        // given
         Long userId = 1L, couponId = 1L;
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        setupIssueMock(userId, couponId, coupon, policy);
+        // 유한 쿠폰(재고 100개)으로 설정하여 테스트
+        setupIssueMock(userId, couponId, coupon, policy, 100);
 
-        // FixedDate는 null, DurationDays 설정
         given(policy.getFixedEndDate()).willReturn(null);
         given(policy.getDurationDays()).willReturn(30);
 
@@ -318,25 +370,30 @@ class CouponServiceTest {
         given(savedMC.getMemberCouponId()).willReturn(100L);
         given(memberCouponRepository.save(any(MemberCoupon.class))).willReturn(savedMC);
 
+        // when
         Long result = couponService.issueMemberCoupon(userId, couponId);
 
+        // then
         assertThat(result).isEqualTo(100L);
+        verify(couponRepository).decreaseRemainingQuantity(couponId); // 차감 쿼리 호출 확인
     }
 
     @Test
     @DisplayName("발급 실패 - 만료일 기준 없음 (IllegalStateException)")
     void issueMemberCoupon_Fail_NoExpirationCondition() {
+        // given
         Long userId = 1L, couponId = 1L;
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        setupIssueMock(userId, couponId, coupon, policy);
+        // 무제한 쿠폰(null)으로 설정하여 재고 차감 로직을 건너뜀
+        setupIssueMock(userId, couponId, coupon, policy, null);
 
-        // 둘 다 null
         given(policy.getFixedEndDate()).willReturn(null);
         given(policy.getDurationDays()).willReturn(null);
         given(policy.getCouponPolicyId()).willReturn(99L);
 
+        // when & then
         assertThatThrownBy(() -> couponService.issueMemberCoupon(userId, couponId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("만료일 기준이 없습니다");
@@ -346,7 +403,7 @@ class CouponServiceTest {
     @DisplayName("발급 실패 - 쿠폰 없음")
     void issueMemberCoupon_Fail_CouponNotFound() {
         Long couponId = 1L;
-        given(couponRepository.findByIdForUpdate(couponId)).willReturn(Optional.empty());
+        given(couponRepository.findById(couponId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> couponService.issueMemberCoupon(1L, couponId))
                 .isInstanceOf(CouponNotFoundException.class);
@@ -359,7 +416,7 @@ class CouponServiceTest {
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        given(couponRepository.findByIdForUpdate(couponId)).willReturn(Optional.of(coupon));
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(policy.isIssuable()).willReturn(false);
 
@@ -376,7 +433,7 @@ class CouponServiceTest {
         Coupon coupon = mock(Coupon.class);
         CouponPolicy policy = mock(CouponPolicy.class);
 
-        given(couponRepository.findByIdForUpdate(couponId)).willReturn(Optional.of(coupon));
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(policy.isIssuable()).willReturn(true);
         given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(true);
@@ -455,9 +512,11 @@ class CouponServiceTest {
     // issueWelcomeCoupon (웰컴 쿠폰)
 
     @Test
-    @DisplayName("웰컴 쿠폰 발급 성공")
+    @DisplayName("웰컴 쿠폰 발급 성공 - 무제한 쿠폰인 경우")
     void issueWelcomeCoupon_Success() {
+        // given
         Long userId = 1L;
+        Long couponId = 10L;
         CouponPolicy policy = mock(CouponPolicy.class);
         Coupon coupon = mock(Coupon.class);
 
@@ -465,19 +524,25 @@ class CouponServiceTest {
         given(policyRepository.findActivePolicyByType(CouponPolicyType.WELCOME)).willReturn(Optional.of(policy));
         given(couponRepository.findByCouponPolicy_CouponPolicyId(1L)).willReturn(Optional.of(coupon));
 
-        // issueMemberCoupon Stubbing
-        given(coupon.getCouponId()).willReturn(10L);
-        given(couponRepository.findByIdForUpdate(10L)).willReturn(Optional.of(coupon));
+        given(coupon.getCouponId()).willReturn(couponId);
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
+
+        given(coupon.getCouponRemainingQuantity()).willReturn(null);
+
         given(policy.isIssuable()).willReturn(true);
         given(policy.getDurationDays()).willReturn(30);
+        given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(false);
 
         MemberCoupon savedMC = mock(MemberCoupon.class);
         given(memberCouponRepository.save(any(MemberCoupon.class))).willReturn(savedMC);
 
+        // when
         couponService.issueWelcomeCoupon(userId);
 
+        // then
         verify(memberCouponRepository).save(any(MemberCoupon.class));
+        verify(couponRepository, never()).decreaseRemainingQuantity(any());
     }
 
     @Test
@@ -515,7 +580,7 @@ class CouponServiceTest {
         given(coupon.getCouponId()).willReturn(10L);
 
         // issueMemberCoupon 내부에서 예외 발생 시킴 (예: 이미 발급됨)
-        given(couponRepository.findByIdForUpdate(10L)).willThrow(
+        given(couponRepository.findById(10L)).willThrow(
                 new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED));
 
         assertThatThrownBy(() -> couponService.issueWelcomeCoupon(userId))
@@ -526,28 +591,37 @@ class CouponServiceTest {
     // issueBirthdayCoupon (생일 쿠폰)
 
     @Test
-    @DisplayName("생일 쿠폰 발급 성공")
+    @DisplayName("생일 쿠폰 발급 성공 - 무제한 쿠폰인 경우")
     void issueBirthdayCoupon_Success() {
+        // given
         Long userId = 1L;
+        Long couponId = 20L;
         CouponPolicy policy = mock(CouponPolicy.class);
         Coupon coupon = mock(Coupon.class);
 
-        given(policy.getCouponPolicyId()).willReturn(2L);
         given(policyRepository.findActivePolicyByType(CouponPolicyType.BIRTHDAY)).willReturn(Optional.of(policy));
+        given(policy.getCouponPolicyId()).willReturn(2L);
         given(couponRepository.findByCouponPolicy_CouponPolicyId(2L)).willReturn(Optional.of(coupon));
 
-        given(coupon.getCouponId()).willReturn(20L);
-        given(couponRepository.findByIdForUpdate(20L)).willReturn(Optional.of(coupon));
+        given(coupon.getCouponId()).willReturn(couponId);
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
         given(coupon.getCouponPolicy()).willReturn(policy);
+
+        given(coupon.getCouponRemainingQuantity()).willReturn(null);
+
         given(policy.isIssuable()).willReturn(true);
         given(policy.getDurationDays()).willReturn(7);
+        given(memberCouponRepository.existsByUserIdAndCoupon_CouponId(userId, couponId)).willReturn(false);
 
         MemberCoupon savedMC = mock(MemberCoupon.class);
         given(memberCouponRepository.save(any(MemberCoupon.class))).willReturn(savedMC);
 
+        // when
         couponService.issueBirthdayCoupon(userId);
 
+        // then
         verify(memberCouponRepository).save(any(MemberCoupon.class));
+        verify(couponRepository, never()).decreaseRemainingQuantity(any());
     }
 
     @Test
@@ -583,16 +657,12 @@ class CouponServiceTest {
         given(coupon.getCouponId()).willReturn(10L);
 
         // 예외 유발
-        given(couponRepository.findByIdForUpdate(10L)).willThrow(new RuntimeException("DB Error"));
+        given(couponRepository.findById(10L)).willThrow(new RuntimeException("DB Error"));
 
         assertThatThrownBy(() -> couponService.issueBirthdayCoupon(userId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB Error");
     }
-
-    // ==========================================
-    // 9. getAppliableCoupons (적용 가능 조회)
-    // ==========================================
 
     @Test
     @DisplayName("적용 가능 쿠폰 조회 성공")
@@ -602,7 +672,6 @@ class CouponServiceTest {
         Long bookId = 100L;
         List<Long> categories = List.of(1L);
 
-        // 1. Policy Mock (DTO 생성에 필요한 필드 추가 Stubbing)
         CouponPolicy policy = mock(CouponPolicy.class);
         given(policy.isIssuable()).willReturn(true);
         given(policy.getCouponPolicyName()).willReturn("테스트 쿠폰");
@@ -610,17 +679,13 @@ class CouponServiceTest {
         given(policy.getCouponDiscountValue()).willReturn(1000);
         given(policy.getCouponPolicyStatus()).willReturn(CouponPolicyStatus.ACTIVE);
 
-        // 2. Coupon Mock
         Coupon coupon = mock(Coupon.class);
         given(coupon.getCouponPolicy()).willReturn(policy);
         given(coupon.getCouponRemainingQuantity()).willReturn(10); // 재고 있음
         given(coupon.getCouponId()).willReturn(1L); // [중요] 서비스 로직에서 ID를 비교하므로 설정 필요
 
-        // 3. Repository Mock
-        // (1) 적용 가능 쿠폰 목록 조회
         given(couponRepository.findAppliableCoupons(bookId, categories)).willReturn(List.of(coupon));
 
-        // (2) [추가] 유저가 보유한 쿠폰 ID 목록 조회 (회원인 경우 호출됨)
         given(memberCouponRepository.findAllCouponIdsByUserId(userId)).willReturn(List.of());
 
         // when

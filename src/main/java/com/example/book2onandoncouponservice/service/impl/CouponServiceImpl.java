@@ -62,21 +62,25 @@ public class CouponServiceImpl implements CouponService {
         Coupon coupon = new Coupon(requestDto.getCouponRemainingQuantity(), policy);
         Coupon savedCoupon = couponRepository.save(coupon);
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                String redisKey = "coupon:" + savedCoupon.getCouponId() + "stock:";
-                String initialQuantity = (savedCoupon.getCouponRemainingQuantity() == null)
-                        ? String.valueOf(Long.MAX_VALUE)
-                        : String.valueOf(savedCoupon.getCouponRemainingQuantity());
+        if (savedCoupon.getCouponRemainingQuantity() != null) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    String redisKey = "coupon:" + savedCoupon.getCouponId() + "stock:";
+                    String initialQuantity = (savedCoupon.getCouponRemainingQuantity() == null)
+                            ? String.valueOf(Long.MAX_VALUE)
+                            : String.valueOf(savedCoupon.getCouponRemainingQuantity());
 
-                redisTemplate.opsForValue().set(redisKey, initialQuantity);
+                    redisTemplate.opsForValue().set(redisKey, initialQuantity);
 
-                log.info("Redis 재고 초기화 완료. key={}, quantity={}", redisKey, initialQuantity);
-            }
-        });
+                    log.info("Redis 재고 초기화 완료. key={}, quantity={}", redisKey, initialQuantity);
+                }
+            });
+        } else {
+            log.debug("무제한 쿠폰이므로 Redis 재고 초기화를 건너뜁니다. couponId={}", savedCoupon.getCouponId());
+        }
 
-        log.info("쿠폰 생성 완료. generatedCouponId={}", savedCoupon.getCouponId());
+        log.debug("쿠폰 생성 완료. generatedCouponId={}", savedCoupon.getCouponId());
         return savedCoupon.getCouponId();
     }
 
@@ -85,7 +89,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Page<CouponResponseDto> getCoupons(Pageable pageable, String status) {
 
-        log.info("전체 쿠폰 목록 조회 요청. page={}, size={}, status={}", pageable.getPageNumber(), pageable.getPageSize(),
+        log.debug("전체 쿠폰 목록 조회 요청. page={}, size={}, status={}", pageable.getPageNumber(), pageable.getPageSize(),
                 status);
         CouponPolicyStatus policyStatus = null;
 
@@ -97,7 +101,7 @@ public class CouponServiceImpl implements CouponService {
             }
         }
         Page<Coupon> coupons = couponRepository.findAllByPolicyStatus(policyStatus, pageable);
-        log.info("전체 쿠폰 목록 조회 완료. totalElements={}", coupons.getTotalElements());
+        log.debug("전체 쿠폰 목록 조회 완료. totalElements={}", coupons.getTotalElements());
 
         return coupons.map(CouponResponseDto::new);
     }
@@ -106,7 +110,7 @@ public class CouponServiceImpl implements CouponService {
     // 쿠폰 상세 조회
     @Override
     public CouponResponseDto getCouponDetail(Long couponId) {
-        log.info("쿠폰 상세 조회 요청. couponId={}", couponId);
+        log.debug("쿠폰 상세 조회 요청. couponId={}", couponId);
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(CouponNotFoundException::new);
         return new CouponResponseDto(coupon);
@@ -116,7 +120,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Page<CouponResponseDto> getAvailableCoupon(Pageable pageable) {
 
-        log.info("발급 가능(다운로드용) 쿠폰 목록 조회 요청. page={}", pageable.getPageNumber());
+        log.debug("발급 가능(다운로드용) 쿠폰 목록 조회 요청. page={}", pageable.getPageNumber());
         LocalDate today = LocalDate.now();
         Page<Coupon> coupons = couponRepository.findAvailableCoupons(
                 CouponPolicyStatus.ACTIVE,
@@ -130,7 +134,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Long issueMemberCoupon(Long userId, Long couponId) {
 
-        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+        Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> {
                             log.error("존재하지 않는 쿠폰. couponId={}", couponId);
                             return new CouponNotFoundException();
@@ -149,7 +153,14 @@ public class CouponServiceImpl implements CouponService {
             throw new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED);
         }
 
-        coupon.decreaseStock();
+        if (coupon.getCouponRemainingQuantity() != null) {
+            int updatedRows = couponRepository.decreaseRemainingQuantity(couponId);
+
+            if (updatedRows == 0) {
+                log.error("DB 재고 차감 실패 - 이미 소진됨. couponId={}", couponId);
+                throw new CouponIssueException(CouponErrorCode.COUPON_OUT_OF_STOCK);
+            }
+        }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endDate = calculateExpirationDate(policy, now);
