@@ -509,6 +509,8 @@ class CouponServiceTest {
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
+    // issueWelcomeCoupon (웰컴 쿠폰)
+
     @Test
     @DisplayName("웰컴 쿠폰 발급 성공 - 무제한 쿠폰인 경우")
     void issueWelcomeCoupon_Success() {
