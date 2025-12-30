@@ -16,10 +16,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,6 +38,12 @@ class MemberCouponControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean // 스프링 부트 3.4+ 기준, 이전 버전은 @MockBean 사용
+    private StringRedisTemplate redisTemplate;
+
+    @MockitoBean
+    private RabbitTemplate rabbitTemplate;
 
     @Test
     @DisplayName("쿠폰 사용 요청 - 성공")
