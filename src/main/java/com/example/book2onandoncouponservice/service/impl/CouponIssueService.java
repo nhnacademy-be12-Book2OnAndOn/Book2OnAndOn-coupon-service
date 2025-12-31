@@ -40,7 +40,7 @@ public class CouponIssueService {
             throw new CouponIssueException(CouponErrorCode.COUPON_ALREADY_ISSUED);
         }
 
-        String stockKey = "coupon:" + couponId + "stock";
+        String stockKey = "coupon:" + couponId + "stock:";
         boolean isLimited = coupon.getCouponRemainingQuantity() != null;
 
         if (isLimited) {
