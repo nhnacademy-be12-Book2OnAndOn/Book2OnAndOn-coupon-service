@@ -1,7 +1,5 @@
 package com.example.book2onandoncouponservice.entity;
 
-import com.example.book2onandoncouponservice.exception.CouponErrorCode;
-import com.example.book2onandoncouponservice.exception.CouponIssueException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -56,15 +54,5 @@ public class Coupon {
         }
 
         this.couponRemainingQuantity = remainingQuantity;
-    }
-
-    // 재고 차감
-    public void decreaseStock() {
-        if (couponRemainingQuantity != null) {
-            if (couponRemainingQuantity <= 0) {
-                throw new CouponIssueException(CouponErrorCode.COUPON_OUT_OF_STOCK);
-            }
-            couponRemainingQuantity--;
-        }
     }
 }
