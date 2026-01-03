@@ -59,7 +59,12 @@ public class CouponController {
             @RequestHeader("X-USER-ID") Long userId,
             @PathVariable("coupon-id") Long couponId) {
 
-        couponIssueService.issueRequest(userId, couponId);
+        boolean isIssuedImmediately = couponIssueService.issueRequest(userId, couponId);
+
+        if (isIssuedImmediately) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("쿠폰이 발급되었습니다.");
+        }
+
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("쿠폰 발급 요청이 접수되었습니다. 잠시 후 보관함을 확인해주세요.");
     }
 

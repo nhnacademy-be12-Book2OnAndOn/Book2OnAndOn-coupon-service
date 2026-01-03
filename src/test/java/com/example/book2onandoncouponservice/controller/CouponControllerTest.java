@@ -98,24 +98,6 @@ class CouponControllerTest {
     }
 
     @Test
-    @DisplayName("쿠폰 발급 요청 - 성공")
-    void issueCoupon_Success() throws Exception {
-        // given
-        Long userId = 999L;
-        Long couponId = 1L;
-
-        // when & then
-        mockMvc.perform(post("/coupons/{coupon-id}", couponId)
-                        .header("X-USER-ID", userId))
-                .andExpect(status().isAccepted()) // 202 Accepted
-                .andExpect(content().string("쿠폰 발급 요청이 접수되었습니다. 잠시 후 보관함을 확인해주세요."))
-                .andDo(print());
-
-        // Service 메서드 호출 검증
-        verify(couponIssueService).issueRequest(userId, couponId);
-    }
-
-    @Test
     @DisplayName("쿠폰 발급 요청 - 실패 (헤더 누락)")
     void issueCoupon_Fail_MissingHeader() throws Exception {
         // given
@@ -126,5 +108,45 @@ class CouponControllerTest {
         mockMvc.perform(post("/coupons/{coupon-id}", couponId))
                 .andExpect(status().is5xxServerError())
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("쿠폰 발급 요청 - 성공 (즉시 발급/무제한)")
+    void issueCoupon_Success_Immediate() throws Exception {
+        // given
+        Long userId = 999L;
+        Long couponId = 1L;
+
+        // Service가 true를 반환하도록 설정 (무제한 쿠폰 로직)
+        given(couponIssueService.issueRequest(userId, couponId)).willReturn(true);
+
+        // when & then
+        mockMvc.perform(post("/coupons/{coupon-id}", couponId)
+                        .header("X-USER-ID", userId))
+                .andExpect(status().isCreated()) // 201 Created 확인
+                .andExpect(content().string("쿠폰이 발급되었습니다."))
+                .andDo(print());
+
+        verify(couponIssueService).issueRequest(userId, couponId);
+    }
+
+    @Test
+    @DisplayName("쿠폰 발급 요청 - 성공 (대기열 접수/선착순)")
+    void issueCoupon_Success_Async() throws Exception {
+        // given
+        Long userId = 999L;
+        Long couponId = 2L;
+
+        // Service가 false를 반환하도록 설정 (선착순 쿠폰 로직)
+        given(couponIssueService.issueRequest(userId, couponId)).willReturn(false);
+
+        // when & then
+        mockMvc.perform(post("/coupons/{coupon-id}", couponId)
+                        .header("X-USER-ID", userId))
+                .andExpect(status().isAccepted()) // 202 Accepted 확인
+                .andExpect(content().string("쿠폰 발급 요청이 접수되었습니다. 잠시 후 보관함을 확인해주세요."))
+                .andDo(print());
+
+        verify(couponIssueService).issueRequest(userId, couponId);
     }
 }
