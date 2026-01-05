@@ -25,7 +25,7 @@ public class RabbitConfig {
     public static final String DLX_ROUTING_KEY_BIRTHDAY = "coupon.birthday.dlq";
 
     //쿠폰 롤백 RabbitMQ 설정
-    public static final String ORDER_EXCHANGE = "book2.dev.order.exchange";
+    public static final String ORDER_EXCHANGE = "book2.dev.order-payment.exchange";
     public static final String QUEUE_CANCEL = "book2.dev.coupon.cancel.queue";
     public static final String ROUTING_KEY_CANCEL = "coupon.cancel";
     public static final String DLX_ROUTING_KEY_CANCEL = "coupon.cancel.dlq";
