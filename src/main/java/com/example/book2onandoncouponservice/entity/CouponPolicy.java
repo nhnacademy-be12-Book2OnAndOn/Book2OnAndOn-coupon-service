@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -30,7 +31,11 @@ import org.hibernate.annotations.BatchSize;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "coupon_policy")
+@Table(name = "coupon_policy",
+        indexes = {
+                //웰컴/생일/상품 적용 쿠폰 조회용 복합 인덱스
+                @Index(name = "idx_policy_type_status", columnList = "coupon_policy_type, coupon_policy_status")
+        })
 public class CouponPolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

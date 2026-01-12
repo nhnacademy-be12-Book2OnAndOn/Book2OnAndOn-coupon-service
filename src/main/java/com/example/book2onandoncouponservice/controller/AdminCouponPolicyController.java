@@ -57,7 +57,7 @@ public class AdminCouponPolicyController {
             @Valid @RequestBody CouponPolicyRequestDto requestDto) {
 
         Long policyId = couponPolicyService.createPolicy(requestDto);
-        log.info("쿠폰정책 생성 완료: {}", policyId);
+        log.debug("쿠폰정책 생성 완료: {}", policyId);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -68,7 +68,7 @@ public class AdminCouponPolicyController {
             @Valid @RequestBody CouponPolicyUpdateRequestDto requestDto) {
 
         couponPolicyService.updatePolicy(couponPolicyId, requestDto);
-        log.info("쿠폰정책 수정완료: {}", couponPolicyId);
+        log.debug("쿠폰정책 수정완료: {}", couponPolicyId);
 
         return ResponseEntity.ok().build();
     }
@@ -78,7 +78,7 @@ public class AdminCouponPolicyController {
             @PathVariable("coupon-policy-id") Long couponPolicyId) {
 
         couponPolicyService.deactivatePolicy(couponPolicyId);
-        log.warn("쿠폰정책 비활성화 완료: {}", couponPolicyId);
+        log.debug("쿠폰정책 비활성화 완료: {}", couponPolicyId);
 
         return ResponseEntity.noContent().build();
     }
