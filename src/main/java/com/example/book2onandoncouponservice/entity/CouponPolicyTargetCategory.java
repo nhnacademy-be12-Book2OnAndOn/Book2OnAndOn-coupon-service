@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -20,7 +21,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "coupon_policy_target_category")
+@Table(name = "coupon_policy_target_category",
+        indexes = {
+                //카테고리별 정책 조회 성능 향상
+                @Index(name = "idx_target_category_id", columnList = "category_id")
+        })
 public class CouponPolicyTargetCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
